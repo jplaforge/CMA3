@@ -29,3 +29,19 @@ next-env.d.ts
 # Ignore pnpm lockfile – we use Yarn
 pnpm-lock.yaml
 .yarn/unplugged
+.yarn/unplugged/
+
+# Yarn PnP artifacts
+.pnp.cjs
+.pnp.loader.mjs
+.yarn/unplugged/
+
+# Yarn Zero-Install: ignore everything under .yarn except the release binary
+.yarn/*
+!.yarn/releases/
+!.yarn/releases/**
+
+# Yarn PnP artifacts
+.pnp.cjs
+.pnp.loader.mjs
+.yarn/unplugged/
