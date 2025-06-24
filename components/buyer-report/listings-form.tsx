@@ -34,6 +34,14 @@ export default function ListingsForm({ data, setData }: ListingsFormProps) {
   const [urlToFetch, setUrlToFetch] = useState<{ id: string; url: string } | null>(null)
   const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const ensureTrulyEmptySlotAvailable = (currentListings: ListingProperty[]): ListingProperty[] => {
+    const hasEmptySlot = currentListings.some((l) => !l.listingUrl || l.listingUrl.trim() === "")
+    if (!hasEmptySlot) {
+      return [...currentListings, createEmptyListing()]
+    }
+    return currentListings
+  }
+
   const handleFetchDetails = useCallback(
     async (listingId: string, url?: string) => {
       if (!url || !url.startsWith("http") || loadingStates[listingId]) {
@@ -105,13 +113,13 @@ export default function ListingsForm({ data, setData }: ListingsFormProps) {
         }
 
         setData((prev) => {
-          const updatedListings = prev.listings.map((l) => {
+          let updatedListings = prev.listings.map((l) => {
             if (l.id === listingId) {
               return {
+                // ... (keep existing property updates)
                 ...l,
-                listingUrl: url, // Ensure listingUrl is also updated/set
+                listingUrl: url,
                 imageUrl: details.imageUrl || l.imageUrl,
-                // Use 'details.title' (from og:title or page title) as primary, fallback to 'details.address'
                 address: details.title || details.address || l.address,
                 notes: details.description || l.notes,
                 askingPrice: details.price ?? details.extractedPrice ?? l.askingPrice,
@@ -123,20 +131,15 @@ export default function ListingsForm({ data, setData }: ListingsFormProps) {
                 garageSpaces: details.garageSpaces || l.garageSpaces,
                 levels: details.levels || l.levels,
                 lotSize: details.lotSize || l.lotSize,
-                lat: details.lat ?? l.lat, // Update lat if fetched/geocoded
-                lng: details.lng ?? l.lng, // Update lng if fetched/geocoded
+                lat: details.lat ?? l.lat,
+                lng: details.lng ?? l.lng,
               }
             }
             return l
           })
 
-          const hasEmptySlotForInput = updatedListings.some((l) => !l.address && !l.listingUrl) // Check for truly empty slot
-          if (!hasEmptySlotForInput) {
-            return {
-              ...prev,
-              listings: [...updatedListings, createEmptyListing()],
-            }
-          }
+          // Ensure an empty slot is available after processing the fetched details
+          updatedListings = ensureTrulyEmptySlotAvailable(updatedListings)
           return { ...prev, listings: updatedListings }
         })
       } catch (error) {
@@ -174,22 +177,30 @@ export default function ListingsForm({ data, setData }: ListingsFormProps) {
 
   const handleListingUrlChange = (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
     const { value } = e.target
-    setData((prev) => ({
-      ...prev,
-      listings: prev.listings.map((listing) => (listing.id === id ? { ...listing, listingUrl: value } : listing)),
-    }))
+    setData((prev) => {
+      let newlistings = prev.listings.map((listing) =>
+        listing.id === id ? { ...listing, listingUrl: value } : listing,
+      )
+      // If a valid-looking URL was entered, ensure an empty slot is available for the next input
+      if (value.startsWith("http")) {
+        newlistings = ensureTrulyEmptySlotAvailable(newlistings)
+      }
+      return { ...prev, listings: newlistings }
+    })
     scheduleFetch(id, value)
   }
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>, id: string) => {
     const pastedText = e.clipboardData.getData("text")
     if (pastedText && pastedText.startsWith("http")) {
-      setData((prev) => ({
-        ...prev,
-        listings: prev.listings.map((listing) =>
+      setData((prev) => {
+        let newlistings = prev.listings.map((listing) =>
           listing.id === id ? { ...listing, listingUrl: pastedText } : listing,
-        ),
-      }))
+        )
+        // After pasting a valid URL, ensure an empty slot is available
+        newlistings = ensureTrulyEmptySlotAvailable(newlistings)
+        return { ...prev, listings: newlistings }
+      })
 
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current)
@@ -204,15 +215,13 @@ export default function ListingsForm({ data, setData }: ListingsFormProps) {
 
   const removeListing = (id: string) => {
     setData((prev) => {
-      const remainingListings = prev.listings.filter((l) => l.id !== id)
+      let remainingListings = prev.listings.filter((l) => l.id !== id)
       if (remainingListings.length === 0) {
+        // If all listings are removed, always add one new empty slot
         return { ...prev, listings: [createEmptyListing()] }
       }
-      // Ensure there's always one empty slot if all are filled
-      const hasEmptySlotForInput = remainingListings.some((l) => !l.address && !l.listingUrl)
-      if (!hasEmptySlotForInput) {
-        return { ...prev, listings: [...remainingListings, createEmptyListing()] }
-      }
+      // Otherwise, ensure there's an empty slot available among the remaining ones
+      remainingListings = ensureTrulyEmptySlotAvailable(remainingListings)
       return { ...prev, listings: remainingListings }
     })
     if (urlToFetch && urlToFetch.id === id) {

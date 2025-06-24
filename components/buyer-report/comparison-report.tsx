@@ -20,7 +20,6 @@ import {
 interface ComparisonReportProps {
   data: BuyerReportState
   googleMapsApiKey?: string
-  // setData prop is not used in this component, it can be removed if not needed by parent for other reasons
 }
 
 const ComparisonIcon = ({ meets, className }: { meets: boolean | null; className?: string }) => {
@@ -102,6 +101,7 @@ export default function ComparisonReport({ data, googleMapsApiKey }: ComparisonR
 
   return (
     <div className="space-y-6">
+      {/* Criteria Card */}
       <Card>
         <CardHeader>
           <CardTitle>Ideal Property Criteria</CardTitle>
@@ -144,10 +144,19 @@ export default function ComparisonReport({ data, googleMapsApiKey }: ComparisonR
         </CardContent>
       </Card>
 
+      {/* Listings */}
       <div>
         <h2 className="text-2xl font-bold mb-4">Listings for Consideration</h2>
         {listings.filter((l) => l.address || l.listingUrl).length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div
+            className="
+              flex flex-row gap-6 overflow-x-auto pb-2
+              [&::-webkit-scrollbar]:h-2
+              [&::-webkit-scrollbar-track]:bg-transparent
+              [&::-webkit-scrollbar-thumb]:bg-muted-foreground/40
+              scrollbar-thumb-rounded
+            "
+          >
             {listings
               .filter((l) => l.address || l.listingUrl)
               .map((listing: ListingProperty) => {
@@ -187,7 +196,7 @@ export default function ComparisonReport({ data, googleMapsApiKey }: ComparisonR
                 }
 
                 return (
-                  <div key={listing.id} className="flex flex-col space-y-2">
+                  <div key={listing.id} className="shrink-0 w-[360px]">
                     <a
                       href={listing.listingUrl || "#"}
                       target={listing.listingUrl ? "_blank" : "_self"}
@@ -200,6 +209,7 @@ export default function ComparisonReport({ data, googleMapsApiKey }: ComparisonR
                             src={
                               listing.imageUrl ||
                               "/placeholder.svg?width=400&height=250&query=beautiful+house+exterior" ||
+                              "/placeholder.svg" ||
                               "/placeholder.svg"
                             }
                             alt={`Property at ${listing.address || "Unknown Address"}`}
@@ -253,12 +263,7 @@ export default function ComparisonReport({ data, googleMapsApiKey }: ComparisonR
                             <StatPill icon={<BedDoubleIcon />} value={listing.beds} label="Beds" meets={meetsBeds} />
                             <StatPill icon={<BathIcon />} value={listing.baths} label="Baths" meets={meetsBaths} />
                             <StatPill icon={<SquareIcon />} value={listing.sqft} label="SqFt" meets={meetsSqft} />
-                            <StatPill
-                              icon={<CarIcon />}
-                              value={listing.garageSpaces}
-                              label="Garage"
-                              meets={null} // No criteria for garage yet
-                            />
+                            <StatPill icon={<CarIcon />} value={listing.garageSpaces} label="Garage" meets={null} />
                           </div>
 
                           <div className="mt-2 pt-2 text-xs space-y-1 text-muted-foreground">
@@ -280,13 +285,15 @@ export default function ComparisonReport({ data, googleMapsApiKey }: ComparisonR
                         </div>
                       </Card>
                     </a>
+
+                    {/* Street-view thumbnail */}
                     {streetViewImageUrl && clickableStreetViewUrl && (
                       <a
                         href={clickableStreetViewUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label={`Open Street View for ${listing.address || "property"}`}
-                        className="block rounded-lg overflow-hidden group-hover:shadow-lg transition-shadow duration-200 aspect-[16/10] bg-muted"
+                        className="block rounded-lg overflow-hidden group-hover:shadow-lg transition-shadow duration-200 aspect-[16/10] bg-muted mt-2"
                       >
                         <img
                           src={streetViewImageUrl || "/placeholder.svg"}
@@ -309,6 +316,7 @@ export default function ComparisonReport({ data, googleMapsApiKey }: ComparisonR
         )}
       </div>
 
+      {/* Realtor notes */}
       {data.realtorNotes && (
         <Card>
           <CardHeader>

@@ -4,10 +4,10 @@ import { openai } from "@ai-sdk/openai"
 import { generateObject } from "ai"
 import { z } from "zod"
 
+const OPENAI_ENABLED = Boolean(process.env.OPENAI_API_KEY)
+
 // Attempt to extract structured data from any JSON-LD scripts found in the page
-const extractStructuredData = (
-  $: cheerio.CheerioAPI,
-): Record<string, string> => {
+const extractStructuredData = ($: cheerio.CheerioAPI): Record<string, string> => {
   const result: Record<string, string> = {}
   $("script[type='application/ld+json']").each((_, el) => {
     const jsonText = $(el).contents().text().trim()
@@ -160,8 +160,9 @@ export async function POST(request: NextRequest) {
   }
 
   let dedicatedAiPrice: string | null = null
-  try {
-    const pricePrompt = `Analyze the following HTML content from a property listing at ${listingUrl}.
+  if (OPENAI_ENABLED) {
+    try {
+      const pricePrompt = `Analyze the following HTML content from a property listing at ${listingUrl}.
 Your SOLE AND CRITICAL task is to identify and extract the ASKING PRICE.
 The price is usually a number, possibly with a dollar sign and commas (e.g., $1,250,000 or 499000).
 Return the price as a numerical string. If no price is found, return null for the askingPrice field.
@@ -171,21 +172,23 @@ HTML Content:
 ${truncatedHtml}
 \`\`\`
 `
-    const { object: priceData } = await generateObject({
-      model: openai("gpt-4o"),
-      schema: priceSchema,
-      prompt: pricePrompt,
-    })
-    if (priceData.askingPrice) {
-      dedicatedAiPrice = extractNumber(priceData.askingPrice)
+      const { object: priceData } = await generateObject({
+        model: openai("gpt-4o"),
+        schema: priceSchema,
+        prompt: pricePrompt,
+      })
+      if (priceData.askingPrice) {
+        dedicatedAiPrice = extractNumber(priceData.askingPrice)
+      }
+    } catch (error) {
+      console.error("OpenAI price extraction failed:", error)
     }
-  } catch (error) {
-    console.error("Error during dedicated OpenAI price extraction:", error)
   }
 
   let aiExtractedGeneralData: Partial<z.infer<typeof propertyDetailsSchema>> = {}
-  try {
-    const generalPrompt = `You are an expert real estate data extraction model. From the HTML of ${listingUrl}, extract all property details.
+  if (OPENAI_ENABLED) {
+    try {
+      const generalPrompt = `You are an expert real estate data extraction model. From the HTML of ${listingUrl}, extract all property details.
 ${dedicatedAiPrice ? `The price has likely been identified as ${dedicatedAiPrice}. Please verify this or find it if it's different, along with all other details.` : "The asking price is a critical piece of information to find, along with all other details."}
 
 Extract the following: Address, Asking Price, Beds, Baths, SqFt, Property Type, Year Built, Garage Spaces, Levels, Lot Size, Image URL, Description, Latitude, and Longitude.
@@ -196,14 +199,15 @@ HTML Content:
 ${truncatedHtml}
 \`\`\`
 `
-    const { object: aiData } = await generateObject({
-      model: openai("gpt-4o"),
-      schema: propertyDetailsSchema,
-      prompt: generalPrompt,
-    })
-    aiExtractedGeneralData = aiData
-  } catch (error) {
-    console.error("Error calling general OpenAI API for details:", error)
+      const { object: aiData } = await generateObject({
+        model: openai("gpt-4o"),
+        schema: propertyDetailsSchema,
+        prompt: generalPrompt,
+      })
+      aiExtractedGeneralData = aiData
+    } catch (error) {
+      console.error("OpenAI general detail extraction failed:", error)
+    }
   }
 
   const finalPrice =
