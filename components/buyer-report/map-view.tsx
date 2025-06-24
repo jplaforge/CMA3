@@ -14,17 +14,15 @@ const defaultCenter = {
   lng: -74.006,
 }
 
-const libraries = ["places"] as const // "places" library might not be strictly needed here but is common
+const libraries = ["places"] as const
 
-// Define marker icons using google.maps.Symbol for simplicity
-// These will be applied dynamically in the Marker component
 const listingMarkerIconOptions = {
   path: 0, // google.maps.SymbolPath.CIRCLE,
-  fillColor: "#4285F4", // Blue for listings
+  fillColor: "#DC2626", // Red (Tailwind red-600)
   fillOpacity: 1,
   strokeWeight: 1.5,
   strokeColor: "#FFFFFF",
-  scale: 8,
+  scale: 16, // Increased size (was 8)
 }
 
 const poiMarkerIconOptions = {
@@ -38,7 +36,7 @@ const poiMarkerIconOptions = {
 
 interface MapViewProps {
   data: BuyerReportState
-  apiKey?: string // <- NEW
+  apiKey?: string
 }
 
 type SelectedItem = (ListingProperty & { type: "listing" }) | (PointOfInterest & { type: "poi" }) | null
@@ -48,11 +46,18 @@ export default function MapView({ data, apiKey }: MapViewProps) {
   const [selectedItem, setSelectedItem] = useState<SelectedItem>(null)
 
   const validListings = useMemo(
-    () => data.listings.filter((l) => typeof l.lat === "number" && typeof l.lng === "number"),
+    () =>
+      data.listings.filter(
+        (l) => typeof l.lat === "number" && isFinite(l.lat) && typeof l.lng === "number" && isFinite(l.lng),
+      ),
     [data.listings],
   )
+
   const validPois = useMemo(
-    () => data.buyerCriteria.pointsOfInterest.filter((p) => typeof p.lat === "number" && typeof p.lng === "number"),
+    () =>
+      data.buyerCriteria.pointsOfInterest.filter(
+        (p) => typeof p.lat === "number" && isFinite(p.lat) && typeof p.lng === "number" && isFinite(p.lng),
+      ),
     [data.buyerCriteria.pointsOfInterest],
   )
 

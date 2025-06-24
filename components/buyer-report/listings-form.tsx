@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { type BuyerReportState, createEmptyListing } from "@/lib/buyer-report-types"
+import { type BuyerReportState, createEmptyListing, type ListingProperty } from "@/lib/buyer-report-types"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -50,18 +50,71 @@ export default function ListingsForm({ data, setData }: ListingsFormProps) {
           const errorData = await response.json()
           throw new Error(errorData.error || "Failed to fetch details")
         }
-        const details = await response.json()
+
+        // Type casting for the details received from API
+        const details: Partial<
+          ListingProperty & {
+            title?: string
+            price?: string
+            extractedPrice?: string
+            extractedBeds?: string
+            extractedBaths?: string
+            extractedSqft?: string
+          }
+        > = await response.json()
+
+        // Attempt to geocode client-side if address is present but lat/lng are missing
+        // This acts as a fallback if server-side geocoding in fetch-listing-details didn't yield coordinates
+        if (
+          details.address &&
+          (details.lat == null || details.lng == null) &&
+          process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+        ) {
+          console.log(`Coordinates missing for ${details.address}, attempting client-side geocoding.`)
+          try {
+            const geocodeResponse = await fetch("/api/geocode-address", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ address: details.address }),
+            })
+            if (geocodeResponse.ok) {
+              const geocodeData = await geocodeResponse.json()
+              if (geocodeData.lat != null && geocodeData.lng != null) {
+                details.lat = geocodeData.lat
+                details.lng = geocodeData.lng
+                console.log(`Client-side geocoding successful for ${details.address}:`, details.lat, details.lng)
+              } else {
+                console.warn(
+                  "Client-side geocoding successful but lat/lng missing in response for:",
+                  details.address,
+                  geocodeData,
+                )
+              }
+            } else {
+              const errorData = await geocodeResponse.json()
+              console.error(
+                "Client-side geocoding failed for address:",
+                details.address,
+                errorData.error,
+                errorData.details,
+              )
+            }
+          } catch (geocodeError) {
+            console.error("Error during client-side geocoding call for address:", details.address, geocodeError)
+          }
+        }
 
         setData((prev) => {
           const updatedListings = prev.listings.map((l) => {
             if (l.id === listingId) {
               return {
                 ...l,
+                listingUrl: url, // Ensure listingUrl is also updated/set
                 imageUrl: details.imageUrl || l.imageUrl,
-                address: details.title || l.address,
+                // Use 'details.title' (from og:title or page title) as primary, fallback to 'details.address'
+                address: details.title || details.address || l.address,
                 notes: details.description || l.notes,
-                askingPrice:
-                  details.price ?? details.extractedPrice ?? l.askingPrice,
+                askingPrice: details.price ?? details.extractedPrice ?? l.askingPrice,
                 beds: details.beds ?? details.extractedBeds ?? l.beds,
                 baths: details.baths ?? details.extractedBaths ?? l.baths,
                 sqft: details.sqft ?? details.extractedSqft ?? l.sqft,
@@ -70,12 +123,14 @@ export default function ListingsForm({ data, setData }: ListingsFormProps) {
                 garageSpaces: details.garageSpaces || l.garageSpaces,
                 levels: details.levels || l.levels,
                 lotSize: details.lotSize || l.lotSize,
+                lat: details.lat ?? l.lat, // Update lat if fetched/geocoded
+                lng: details.lng ?? l.lng, // Update lng if fetched/geocoded
               }
             }
             return l
           })
 
-          const hasEmptySlotForInput = updatedListings.some((l) => !l.address)
+          const hasEmptySlotForInput = updatedListings.some((l) => !l.address && !l.listingUrl) // Check for truly empty slot
           if (!hasEmptySlotForInput) {
             return {
               ...prev,
@@ -94,26 +149,24 @@ export default function ListingsForm({ data, setData }: ListingsFormProps) {
     [setData, loadingStates],
   )
 
-  const scheduleFetch = useCallback(
-    (id: string, url: string) => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current)
+  const scheduleFetch = useCallback((id: string, url: string) => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+    }
+    debounceTimeoutRef.current = setTimeout(() => {
+      if (url && url.startsWith("http")) {
+        setUrlToFetch({ id, url })
+      } else {
+        setUrlToFetch(null)
       }
-      debounceTimeoutRef.current = setTimeout(() => {
-        if (url && url.startsWith("http")) {
-          setUrlToFetch({ id, url })
-        } else {
-          setUrlToFetch(null)
-        }
-      }, 1000) // 1 second delay
-    },
-    [], // No dependencies, it's a stable function
-  )
+    }, 1000) // 1 second delay
+  }, [])
 
   useEffect(() => {
     if (urlToFetch && urlToFetch.url) {
       const listing = data.listings.find((l) => l.id === urlToFetch.id)
-      if (listing && !listing.address && !loadingStates[urlToFetch.id]) {
+      // Fetch if the slot is truly empty (no address) or if URL changed for an already filled slot (for re-fetch, though current logic focuses on empty)
+      if (listing && (!listing.address || listing.listingUrl !== urlToFetch.url) && !loadingStates[urlToFetch.id]) {
         handleFetchDetails(urlToFetch.id, urlToFetch.url)
       }
     }
@@ -131,7 +184,6 @@ export default function ListingsForm({ data, setData }: ListingsFormProps) {
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>, id: string) => {
     const pastedText = e.clipboardData.getData("text")
     if (pastedText && pastedText.startsWith("http")) {
-      // Update the input value immediately
       setData((prev) => ({
         ...prev,
         listings: prev.listings.map((listing) =>
@@ -139,14 +191,11 @@ export default function ListingsForm({ data, setData }: ListingsFormProps) {
         ),
       }))
 
-      // Cancel any pending debounced fetch
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current)
       }
-      setUrlToFetch(null) // Clear any scheduled fetch via typing
+      setUrlToFetch(null)
 
-      // Trigger fetch immediately
-      // Use a short timeout to allow React to update state before fetching
       setTimeout(() => {
         handleFetchDetails(id, pastedText)
       }, 0)
@@ -159,7 +208,8 @@ export default function ListingsForm({ data, setData }: ListingsFormProps) {
       if (remainingListings.length === 0) {
         return { ...prev, listings: [createEmptyListing()] }
       }
-      const hasEmptySlotForInput = remainingListings.some((l) => !l.address)
+      // Ensure there's always one empty slot if all are filled
+      const hasEmptySlotForInput = remainingListings.some((l) => !l.address && !l.listingUrl)
       if (!hasEmptySlotForInput) {
         return { ...prev, listings: [...remainingListings, createEmptyListing()] }
       }
@@ -173,9 +223,16 @@ export default function ListingsForm({ data, setData }: ListingsFormProps) {
     }
   }
 
-  const activeListingForInputIndex = data.listings.findIndex((l) => !l.address)
-  const activeListingForInput = activeListingForInputIndex !== -1 ? data.listings[activeListingForInputIndex] : null
-  const filledListings = data.listings.filter((l) => l.address && l !== activeListingForInput)
+  // Find the first listing that doesn't have an address OR a listing URL to mark it as the active input slot
+  const activeListingForInputIndex = data.listings.findIndex((l) => !l.address && !l.listingUrl)
+  const activeListingForInput =
+    activeListingForInputIndex !== -1
+      ? data.listings[activeListingForInputIndex]
+      : data.listings.every((l) => l.address || l.listingUrl)
+        ? null
+        : data.listings.find((l) => !l.address)
+
+  const filledListings = data.listings.filter((l) => (l.address || l.listingUrl) && l !== activeListingForInput)
 
   return (
     <div className="space-y-4">
@@ -183,9 +240,10 @@ export default function ListingsForm({ data, setData }: ListingsFormProps) {
         <div key={activeListingForInput.id} className="p-4 border rounded-lg bg-background shadow-sm">
           <div className="flex justify-between items-center mb-2">
             <Label htmlFor={`listingUrl-${activeListingForInput.id}`} className="font-semibold text-md">
-              Add Listing #{activeListingForInputIndex + 1}
+              Add Listing #{data.listings.findIndex((l) => l.id === activeListingForInput.id) + 1}
             </Label>
-            {data.listings.length > 1 && !activeListingForInput.address && (
+            {/* Allow removing an empty slot only if it's not the last one and it's truly empty */}
+            {data.listings.length > 1 && !activeListingForInput.address && !activeListingForInput.listingUrl && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -220,7 +278,8 @@ export default function ListingsForm({ data, setData }: ListingsFormProps) {
               <AccordionTrigger className="hover:no-underline text-sm py-3">
                 <div className="flex justify-between items-center w-full">
                   <span className="font-medium truncate text-left">
-                    Listing #{data.listings.findIndex((l) => l.id === listing.id) + 1}: {listing.address}
+                    Listing #{data.listings.findIndex((l) => l.id === listing.id) + 1}:{" "}
+                    {listing.address || listing.listingUrl}
                   </span>
                   <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
                 </div>
@@ -228,17 +287,20 @@ export default function ListingsForm({ data, setData }: ListingsFormProps) {
               <AccordionContent className="pt-1 pb-2">
                 <div className="p-1 space-y-2 text-xs">
                   <div className="text-muted-foreground space-y-0.5">
-                    <p className="truncate">
-                      URL:{" "}
-                      <a
-                        href={listing.listingUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                      >
-                        {listing.listingUrl}
-                      </a>
-                    </p>
+                    {listing.listingUrl && (
+                      <p className="truncate">
+                        URL:{" "}
+                        <a
+                          href={listing.listingUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          {listing.listingUrl}
+                        </a>
+                      </p>
+                    )}
+                    {listing.address && !listing.title && <p>Address: {listing.address}</p>}
                     <p>Price: {listing.askingPrice ? `$${Number(listing.askingPrice).toLocaleString()}` : "N/A"}</p>
                     <p>
                       Beds: {listing.beds || "N/A"}, Baths: {listing.baths || "N/A"}, SqFt: {listing.sqft || "N/A"}
@@ -256,9 +318,13 @@ export default function ListingsForm({ data, setData }: ListingsFormProps) {
           ))}
         </Accordion>
       )}
-      {!activeListingForInput && filledListings.length === 0 && (
-        <p className="text-center text-muted-foreground py-4">Enter a URL to begin adding listings.</p>
-      )}
+      {/* Show this message if there are no active input slots and no filled listings */}
+      {!activeListingForInput &&
+        filledListings.length === 0 &&
+        (data.listings.length === 0 ||
+          (data.listings.length === 1 && !data.listings[0].listingUrl && !data.listings[0].address)) && (
+          <p className="text-center text-muted-foreground py-4">Enter a URL to begin adding listings.</p>
+        )}
     </div>
   )
 }
