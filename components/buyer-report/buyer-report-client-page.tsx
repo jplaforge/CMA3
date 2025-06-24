@@ -119,7 +119,7 @@ export default function BuyerReportClientPage({ googleMapsApiKey }: BuyerReportC
             <TabsTrigger value="map">Map View</TabsTrigger>
           </TabsList>
           <TabsContent value="comparison" className="mt-4">
-            <ComparisonReport data={reportData} setData={setReportData} />
+            <ComparisonReport data={reportData} googleMapsApiKey={googleMapsApiKey} />
           </TabsContent>
           <TabsContent value="map" className="mt-4">
             <MapView data={reportData} apiKey={googleMapsApiKey} />

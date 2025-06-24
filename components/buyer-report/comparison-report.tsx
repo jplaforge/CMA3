@@ -19,6 +19,8 @@ import {
 
 interface ComparisonReportProps {
   data: BuyerReportState
+  googleMapsApiKey?: string
+  // setData prop is not used in this component, it can be removed if not needed by parent for other reasons
 }
 
 const ComparisonIcon = ({ meets, className }: { meets: boolean | null; className?: string }) => {
@@ -65,7 +67,7 @@ const StatPill: React.FC<StatPillProps> = ({ icon, value, label, meets }) => {
   )
 }
 
-export default function ComparisonReport({ data }: ComparisonReportProps) {
+export default function ComparisonReport({ data, googleMapsApiKey }: ComparisonReportProps) {
   const { clientName, preparedDate, buyerCriteria, listings } = data
 
   const checkCriteria = (value: string, min: string, max: string): boolean | null => {
@@ -145,7 +147,7 @@ export default function ComparisonReport({ data }: ComparisonReportProps) {
       <div>
         <h2 className="text-2xl font-bold mb-4">Listings for Consideration</h2>
         {listings.filter((l) => l.address || l.listingUrl).length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {listings
               .filter((l) => l.address || l.listingUrl)
               .map((listing: ListingProperty) => {
@@ -160,96 +162,143 @@ export default function ComparisonReport({ data }: ComparisonReportProps) {
 
                 const propertyAge = calculateAge(listing.yearBuilt)
 
+                let streetViewImageUrl = null
+                let clickableStreetViewUrl = null
+
+                if (googleMapsApiKey) {
+                  const locationParam =
+                    listing.lat && listing.lng
+                      ? `${listing.lat},${listing.lng}`
+                      : listing.address
+                        ? encodeURIComponent(listing.address)
+                        : null
+
+                  if (locationParam) {
+                    streetViewImageUrl = `https://maps.googleapis.com/maps/api/streetview?size=400x250&location=${locationParam}&key=${googleMapsApiKey}&fov=90&heading=235&pitch=10`
+                  }
+
+                  if (listing.lat && listing.lng) {
+                    clickableStreetViewUrl = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${listing.lat},${listing.lng}`
+                  } else if (listing.address) {
+                    clickableStreetViewUrl = `https://www.google.com/maps/@?api=1&map_action=pano&query=${encodeURIComponent(
+                      listing.address,
+                    )}`
+                  }
+                }
+
                 return (
-                  <a
-                    key={listing.id}
-                    href={listing.listingUrl || "#"}
-                    target={listing.listingUrl ? "_blank" : "_self"}
-                    rel="noopener noreferrer"
-                    className="block group"
-                  >
-                    <Card className="overflow-hidden h-full flex flex-col transition-all duration-200 group-hover:shadow-lg rounded-lg">
-                      <div className="relative aspect-[16/10] overflow-hidden bg-muted">
-                        <img
-                          src={
-                            listing.imageUrl || "/placeholder.svg?width=400&height=250&query=beautiful+house+exterior"
-                          }
-                          alt={`Property at ${listing.address || "Unknown Address"}`}
-                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                        <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                          1 OF 5 {/* Placeholder */}
-                        </div>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          className="absolute top-2 right-2 text-xs"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            alert("3D Tour clicked (placeholder)")
-                          }}
-                        >
-                          3D TOUR
-                        </Button>
-                      </div>
-
-                      <div className="p-3 flex-grow flex flex-col">
-                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                          <span className="uppercase font-medium">
-                            {listing.propertyType || "PROPERTY"}
-                            {propertyAge && ` • ${propertyAge}`}
-                          </span>
-                          <Badge
-                            variant="outline"
-                            className="text-green-600 border-green-600 px-1.5 py-0.5 text-[10px]"
-                          >
-                            OPEN {/* Placeholder */}
-                          </Badge>
-                        </div>
-
-                        <h3
-                          className="text-lg font-semibold text-foreground leading-tight mb-0.5 truncate"
-                          title={listing.address}
-                        >
-                          {listing.address || "Address Not Available"}
-                        </h3>
-
-                        <p className="text-2xl font-bold text-foreground flex items-center mb-2">
-                          {formatCurrency(listing.askingPrice) || "Price N/A"}
-                          <ComparisonIcon meets={meetsPrice} className="h-4 w-4 ml-1" />
-                        </p>
-
-                        <div className="grid grid-cols-4 gap-1 py-2 border-t border-b">
-                          <StatPill icon={<BedDoubleIcon />} value={listing.beds} label="Beds" meets={meetsBeds} />
-                          <StatPill icon={<BathIcon />} value={listing.baths} label="Baths" meets={meetsBaths} />
-                          <StatPill icon={<SquareIcon />} value={listing.sqft} label="SqFt" meets={meetsSqft} />
-                          <StatPill
-                            icon={<CarIcon />}
-                            value={listing.garageSpaces}
-                            label="Garage"
-                            meets={null} // No criteria for garage yet
+                  <div key={listing.id} className="flex flex-col space-y-2">
+                    <a
+                      href={listing.listingUrl || "#"}
+                      target={listing.listingUrl ? "_blank" : "_self"}
+                      rel="noopener noreferrer"
+                      className="block group"
+                    >
+                      <Card className="overflow-hidden h-full flex flex-col transition-all duration-200 group-hover:shadow-lg rounded-lg">
+                        <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+                          <img
+                            src={
+                              listing.imageUrl ||
+                              "/placeholder.svg?width=400&height=250&query=beautiful+house+exterior" ||
+                              "/placeholder.svg"
+                            }
+                            alt={`Property at ${listing.address || "Unknown Address"}`}
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            width={400}
+                            height={250}
                           />
+                          <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                            1 OF 5 {/* Placeholder */}
+                          </div>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="absolute top-2 right-2 text-xs"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              alert("3D Tour clicked (placeholder)")
+                            }}
+                          >
+                            3D TOUR
+                          </Button>
                         </div>
 
-                        <div className="mt-2 pt-2 text-xs space-y-1 text-muted-foreground">
-                          {listing.lotSize && (
-                            <div className="flex items-center">
-                              <LandPlotIcon className="h-3.5 w-3.5 mr-1.5" />
-                              <span className="font-medium">Lot Size:</span>
-                              <span className="ml-1 font-semibold text-foreground">{listing.lotSize}</span>
-                            </div>
-                          )}
-                          {listing.levels && (
-                            <div className="flex items-center">
-                              <LayersIcon className="h-3.5 w-3.5 mr-1.5" />
-                              <span className="font-medium">Levels:</span>
-                              <span className="ml-1 font-semibold text-foreground">{listing.levels}</span>
-                            </div>
-                          )}
+                        <div className="p-3 flex-grow flex flex-col">
+                          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                            <span className="uppercase font-medium">
+                              {listing.propertyType || "PROPERTY"}
+                              {propertyAge && ` • ${propertyAge}`}
+                            </span>
+                            <Badge
+                              variant="outline"
+                              className="text-green-600 border-green-600 px-1.5 py-0.5 text-[10px]"
+                            >
+                              OPEN {/* Placeholder */}
+                            </Badge>
+                          </div>
+
+                          <h3
+                            className="text-lg font-semibold text-foreground leading-tight mb-0.5 truncate"
+                            title={listing.address}
+                          >
+                            {listing.address || "Address Not Available"}
+                          </h3>
+
+                          <p className="text-2xl font-bold text-foreground flex items-center mb-2">
+                            {formatCurrency(listing.askingPrice) || "Price N/A"}
+                            <ComparisonIcon meets={meetsPrice} className="h-4 w-4 ml-1" />
+                          </p>
+
+                          <div className="grid grid-cols-4 gap-1 py-2 border-t border-b">
+                            <StatPill icon={<BedDoubleIcon />} value={listing.beds} label="Beds" meets={meetsBeds} />
+                            <StatPill icon={<BathIcon />} value={listing.baths} label="Baths" meets={meetsBaths} />
+                            <StatPill icon={<SquareIcon />} value={listing.sqft} label="SqFt" meets={meetsSqft} />
+                            <StatPill
+                              icon={<CarIcon />}
+                              value={listing.garageSpaces}
+                              label="Garage"
+                              meets={null} // No criteria for garage yet
+                            />
+                          </div>
+
+                          <div className="mt-2 pt-2 text-xs space-y-1 text-muted-foreground">
+                            {listing.lotSize && (
+                              <div className="flex items-center">
+                                <LandPlotIcon className="h-3.5 w-3.5 mr-1.5" />
+                                <span className="font-medium">Lot Size:</span>
+                                <span className="ml-1 font-semibold text-foreground">{listing.lotSize}</span>
+                              </div>
+                            )}
+                            {listing.levels && (
+                              <div className="flex items-center">
+                                <LayersIcon className="h-3.5 w-3.5 mr-1.5" />
+                                <span className="font-medium">Levels:</span>
+                                <span className="ml-1 font-semibold text-foreground">{listing.levels}</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </Card>
-                  </a>
+                      </Card>
+                    </a>
+                    {streetViewImageUrl && clickableStreetViewUrl && (
+                      <a
+                        href={clickableStreetViewUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Open Street View for ${listing.address || "property"}`}
+                        className="block rounded-lg overflow-hidden group-hover:shadow-lg transition-shadow duration-200 aspect-[16/10] bg-muted"
+                      >
+                        <img
+                          src={streetViewImageUrl || "/placeholder.svg"}
+                          alt={`Street View of ${listing.address || "property"}`}
+                          className="w-full h-full object-cover"
+                          width={400}
+                          height={250}
+                          loading="lazy"
+                        />
+                      </a>
+                    )}
+                  </div>
                 )
               })}
           </div>
