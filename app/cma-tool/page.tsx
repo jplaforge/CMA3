@@ -1,21 +1,10 @@
 import CmaForm from "@/components/cma/cma-form"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { HomeIcon } from "lucide-react"
 
 export default async function CmaToolRoutePage() {
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
 
   return (
     <div className="container mx-auto p-4 space-y-8">
-      <div className="mb-4">
-        <Link href="/home" passHref>
-          <Button variant="outline">
-            <HomeIcon className="mr-2 h-4 w-4" />
-            Home
-          </Button>
-        </Link>
-      </div>
       <header>
         <h1 className="text-3xl font-bold">Comparative Market Analysis (CMA) Tool</h1>
         <p className="text-muted-foreground">
