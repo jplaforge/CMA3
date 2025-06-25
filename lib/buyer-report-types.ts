@@ -8,31 +8,30 @@ export interface PointOfInterest {
 
 export interface BuyerCriteria {
   priceRange: { min: string; max: string }
-  beds: { min: string; max: string }
-  baths: { min: string; max: string }
-  sqft: { min: string; max: string }
+  beds: string // Changed from { min: string; max: string }
+  baths: string // Changed from { min: string; max: string }
+  sqft: string // Changed from { min: string; max: string }
   mustHaveFeatures: string
   pointsOfInterest: PointOfInterest[]
 }
 
 export interface ListingProperty {
   id: string
-  address: string // This will be prioritized by AI if available, or og:title
+  address: string
   listingUrl?: string
-  imageUrl?: string // Primary image from og:image or AI
+  imageUrl?: string
   askingPrice: string
-  propertyType: string // e.g., Townhouse, Single Family
+  propertyType: string
   beds: string
   baths: string
   sqft: string
   yearBuilt: string
-  notes: string // General description or AI extracted summary
+  notes: string
   lat?: number
   lng?: number
-  garageSpaces?: string // e.g., "2"
-  levels?: string // e.g., "2" or "Split-level"
-  lotSize?: string // e.g., "0.25 acres" or "10,000 sqft"
-  // Potentially add: imageCount, threeDTourUrl, openHouseStatus
+  garageSpaces?: string
+  levels?: string
+  lotSize?: string
 }
 
 export interface BuyerReportState {
@@ -75,9 +74,9 @@ export const initialBuyerReportState: BuyerReportState = {
   preparedDate: new Date().toLocaleDateString("en-CA"),
   buyerCriteria: {
     priceRange: { min: "", max: "" },
-    beds: { min: "", max: "" },
-    baths: { min: "", max: "" },
-    sqft: { min: "", max: "" },
+    beds: "", // Changed
+    baths: "", // Changed
+    sqft: "", // Changed
     mustHaveFeatures: "",
     pointsOfInterest: [],
   },

@@ -69,24 +69,30 @@ const StatPill: React.FC<StatPillProps> = ({ icon, value, label, meets }) => {
 export default function ComparisonReport({ data, googleMapsApiKey }: ComparisonReportProps) {
   const { clientName, preparedDate, buyerCriteria, listings } = data
 
-  const checkCriteria = (value: string, min: string, max: string): boolean | null => {
-    const numVal = Number.parseFloat(value)
-    const numMin = Number.parseFloat(min)
-    const numMax = Number.parseFloat(max)
+  // Updated checkCriteria: if max is empty or not provided, it's a "min" check (value >= min)
+  // If min is empty or not provided, it's a "max" check (value <= max)
+  const checkCriteria = (listingValueStr: string, criteriaMinStr: string, criteriaMaxStr?: string): boolean | null => {
+    const numListingValue = Number.parseFloat(listingValueStr)
+    const numCriteriaMin = Number.parseFloat(criteriaMinStr)
+    const numCriteriaMax = criteriaMaxStr ? Number.parseFloat(criteriaMaxStr) : Number.NaN
 
-    if (value === "" || value === undefined || value === null) return null
-    if (min === "" && max === "") return null
-    if (isNaN(numVal)) return null
+    if (listingValueStr === "" || listingValueStr === undefined || listingValueStr === null) return null // No listing data
+    if (isNaN(numListingValue)) return null // Listing data is not a number
 
-    let meetsMin = true
-    let meetsMax = true
+    const hasMin = criteriaMinStr !== "" && !isNaN(numCriteriaMin)
+    const hasMax = criteriaMaxStr !== "" && !isNaN(numCriteriaMax)
 
-    if (min !== "" && !isNaN(numMin)) meetsMin = numVal >= numMin
-    if (max !== "" && !isNaN(numMax)) meetsMax = numVal <= numMax
+    if (!hasMin && !hasMax) return null // No criteria set
 
-    if (min !== "" && max !== "") return meetsMin && meetsMax
-    if (min !== "") return meetsMin
-    if (max !== "") return meetsMax
+    if (hasMin && hasMax) {
+      return numListingValue >= numCriteriaMin && numListingValue <= numCriteriaMax
+    }
+    if (hasMin) {
+      return numListingValue >= numCriteriaMin
+    }
+    if (hasMax) {
+      return numListingValue <= numCriteriaMax
+    }
     return null
   }
 
@@ -101,7 +107,6 @@ export default function ComparisonReport({ data, googleMapsApiKey }: ComparisonR
 
   return (
     <div className="space-y-6">
-      {/* Criteria Card */}
       <Card>
         <CardHeader>
           <CardTitle>Ideal Property Criteria</CardTitle>
@@ -119,21 +124,15 @@ export default function ComparisonReport({ data, googleMapsApiKey }: ComparisonR
           </div>
           <div>
             <p className="font-semibold">Beds</p>
-            <p className="text-muted-foreground">
-              {buyerCriteria.beds.min || "?"} - {buyerCriteria.beds.max || "?"}
-            </p>
+            <p className="text-muted-foreground">{formatNumber(buyerCriteria.beds) || "Any"}</p>
           </div>
           <div>
             <p className="font-semibold">Baths</p>
-            <p className="text-muted-foreground">
-              {buyerCriteria.baths.min || "?"} - {buyerCriteria.baths.max || "?"}
-            </p>
+            <p className="text-muted-foreground">{formatNumber(buyerCriteria.baths) || "Any"}</p>
           </div>
           <div>
             <p className="font-semibold">Square Feet</p>
-            <p className="text-muted-foreground">
-              {formatNumber(buyerCriteria.sqft.min) || "?"} - {formatNumber(buyerCriteria.sqft.max) || "?"}
-            </p>
+            <p className="text-muted-foreground">{formatNumber(buyerCriteria.sqft) || "Any"}</p>
           </div>
           {buyerCriteria.mustHaveFeatures && (
             <div className="col-span-full">
@@ -144,7 +143,6 @@ export default function ComparisonReport({ data, googleMapsApiKey }: ComparisonR
         </CardContent>
       </Card>
 
-      {/* Listings */}
       <div>
         <h2 className="text-2xl font-bold mb-4">Listings for Consideration</h2>
         {listings.filter((l) => l.address || l.listingUrl).length > 0 ? (
@@ -165,9 +163,11 @@ export default function ComparisonReport({ data, googleMapsApiKey }: ComparisonR
                   buyerCriteria.priceRange.min,
                   buyerCriteria.priceRange.max,
                 )
-                const meetsBeds = checkCriteria(listing.beds, buyerCriteria.beds.min, buyerCriteria.beds.max)
-                const meetsBaths = checkCriteria(listing.baths, buyerCriteria.baths.min, buyerCriteria.baths.max)
-                const meetsSqft = checkCriteria(listing.sqft, buyerCriteria.sqft.min, buyerCriteria.sqft.max)
+                // For single value criteria, we treat it as a minimum requirement.
+                // So, we pass the criteria value as 'min' and an empty string or undefined as 'max'.
+                const meetsBeds = checkCriteria(listing.beds, buyerCriteria.beds)
+                const meetsBaths = checkCriteria(listing.baths, buyerCriteria.baths)
+                const meetsSqft = checkCriteria(listing.sqft, buyerCriteria.sqft)
 
                 const propertyAge = calculateAge(listing.yearBuilt)
 
@@ -285,25 +285,23 @@ export default function ComparisonReport({ data, googleMapsApiKey }: ComparisonR
                         </div>
                       </Card>
                     </a>
-
-                    {/* Street-view thumbnail */}
                     {streetViewImageUrl && clickableStreetViewUrl && (
-                      <a
-                        href={clickableStreetViewUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`Open Street View for ${listing.address || "property"}`}
-                        className="block rounded-lg overflow-hidden group-hover:shadow-lg transition-shadow duration-200 aspect-[16/10] bg-muted mt-2"
-                      >
-                        <img
-                          src={streetViewImageUrl || "/placeholder.svg"}
-                          alt={`Street View of ${listing.address || "property"}`}
-                          className="w-full h-full object-cover"
-                          width={400}
-                          height={250}
-                          loading="lazy"
-                        />
-                      </a>
+                      <Button asChild variant="outline" className="w-full mt-2 text-xs sm:text-sm">
+                        <a
+                          href={clickableStreetViewUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center space-x-2"
+                        >
+                          <img
+                            src={streetViewImageUrl || "/placeholder.svg"}
+                            alt={`Street View of ${listing.address || "property"}`}
+                            className="w-5 h-5 sm:w-6 sm:h-6 object-cover rounded-full border"
+                            loading="lazy"
+                          />
+                          <span>Streetview</span>
+                        </a>
+                      </Button>
                     )}
                   </div>
                 )
@@ -316,7 +314,6 @@ export default function ComparisonReport({ data, googleMapsApiKey }: ComparisonR
         )}
       </div>
 
-      {/* Realtor notes */}
       {data.realtorNotes && (
         <Card>
           <CardHeader>

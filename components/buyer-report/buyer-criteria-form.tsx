@@ -15,7 +15,8 @@ interface BuyerCriteriaFormProps {
 }
 
 export default function BuyerCriteriaForm({ data, setData }: BuyerCriteriaFormProps) {
-  const handleCriteriaChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, field: string) => {
+  // Handles changes for nested objects like priceRange
+  const handleNestedCriteriaChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, field: string) => {
     const { name, value } = e.target
     setData((prev) => ({
       ...prev,
@@ -26,7 +27,8 @@ export default function BuyerCriteriaForm({ data, setData }: BuyerCriteriaFormPr
     }))
   }
 
-  const handleSimpleCriteriaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  // Handles changes for simple top-level properties in buyerCriteria
+  const handleSimpleCriteriaChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setData((prev) => ({
       ...prev,
@@ -82,74 +84,50 @@ export default function BuyerCriteriaForm({ data, setData }: BuyerCriteriaFormPr
                 name="min"
                 placeholder="Min"
                 value={data.buyerCriteria.priceRange.min}
-                onChange={(e) => handleCriteriaChange(e, "priceRange")}
+                onChange={(e) => handleNestedCriteriaChange(e, "priceRange")}
                 type="number"
               />
               <Input
                 name="max"
                 placeholder="Max"
                 value={data.buyerCriteria.priceRange.max}
-                onChange={(e) => handleCriteriaChange(e, "priceRange")}
+                onChange={(e) => handleNestedCriteriaChange(e, "priceRange")}
                 type="number"
               />
             </div>
           </div>
           <div>
-            <Label>Beds</Label>
-            <div className="flex gap-2">
-              <Input
-                name="min"
-                placeholder="Min"
-                value={data.buyerCriteria.beds.min}
-                onChange={(e) => handleCriteriaChange(e, "beds")}
-                type="number"
-              />
-              <Input
-                name="max"
-                placeholder="Max"
-                value={data.buyerCriteria.beds.max}
-                onChange={(e) => handleCriteriaChange(e, "beds")}
-                type="number"
-              />
-            </div>
+            <Label htmlFor="beds">Beds</Label>
+            <Input
+              id="beds"
+              name="beds"
+              placeholder="e.g., 3"
+              value={data.buyerCriteria.beds}
+              onChange={handleSimpleCriteriaChange}
+              type="number"
+            />
           </div>
           <div>
-            <Label>Baths</Label>
-            <div className="flex gap-2">
-              <Input
-                name="min"
-                placeholder="Min"
-                value={data.buyerCriteria.baths.min}
-                onChange={(e) => handleCriteriaChange(e, "baths")}
-                type="number"
-              />
-              <Input
-                name="max"
-                placeholder="Max"
-                value={data.buyerCriteria.baths.max}
-                onChange={(e) => handleCriteriaChange(e, "baths")}
-                type="number"
-              />
-            </div>
+            <Label htmlFor="baths">Baths</Label>
+            <Input
+              id="baths"
+              name="baths"
+              placeholder="e.g., 2"
+              value={data.buyerCriteria.baths}
+              onChange={handleSimpleCriteriaChange}
+              type="number"
+            />
           </div>
           <div>
-            <Label>Square Feet</Label>
-            <div className="flex gap-2">
-              <Input
-                name="min"
-                placeholder="Min"
-                value={data.buyerCriteria.sqft.min}
-                onChange={(e) => handleCriteriaChange(e, "sqft")}
-                type="number"
-              />
-              <Input
-                name="max"
-                placeholder="Max"
-                value={data.buyerCriteria.sqft.max}
-                onChange={(e) => handleCriteriaChange(e, "sqft")}
-                type="number"
-              />
-            </div>
+            <Label htmlFor="sqft">Square Feet</Label>
+            <Input
+              id="sqft"
+              name="sqft"
+              placeholder="e.g., 1800"
+              value={data.buyerCriteria.sqft}
+              onChange={handleSimpleCriteriaChange}
+              type="number"
+            />
           </div>
         </div>
         <div>
