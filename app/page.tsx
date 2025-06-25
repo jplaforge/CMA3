@@ -1,6 +1,6 @@
-import { redirect } from 'next/navigation'
+import { redirect } from "next/navigation"
 
-export default function Home() {
-  // send visitors automatically to /buyer-report
-  redirect('/buyer-report')
+export default function RootPage() {
+  // send visitors automatically to /home
+  redirect("/home")
 }
