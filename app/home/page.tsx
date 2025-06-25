@@ -1,36 +1,46 @@
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { ArrowRightIcon, BuildingIcon, UsersIcon } from "lucide-react"
+import { Card, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import { ArrowRightIcon, UsersIcon, BarChartIcon, MapIcon } from "lucide-react"
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 to-stone-100 dark:from-slate-900 dark:to-stone-800">
-      <header className="py-6 px-4 md:px-6 border-b dark:border-slate-700">
-        <div className="container mx-auto flex items-center justify-between">
-          <Link href="/home" className="flex items-center gap-2" prefetch={false}>
-            <BuildingIcon className="h-8 w-8 text-sky-600 dark:text-sky-500" />
-            <span className="text-2xl font-bold text-slate-800 dark:text-slate-100">Real Estate Analytics Suite</span>
+    <div className="flex flex-col min-h-screen bg-black text-gray-200 font-sans">
+      <header className="sticky top-0 z-50 w-full border-b border-gray-800 bg-black/80 backdrop-blur-lg">
+        <div className="container mx-auto flex h-20 items-center justify-center py-4 px-4 md:px-6">
+          <Link href="/home" className="flex items-center" prefetch={false}>
+            <Image
+              src="/logos/welcomespaces-logo-light.png"
+              alt="WelcomeSpaces Logo"
+              width={500} // Slightly reduced from 600 for better proportion
+              height={100} // Slightly reduced from 120
+              priority // Prioritize loading the logo
+            />
           </Link>
-          {/* Add navigation if needed in the future */}
         </div>
       </header>
 
       <main className="flex-1">
-        <section className="py-12 md:py-24 lg:py-32">
+        {/* Hero Section */}
+        <section className="relative pt-16 md:pt-24 lg:pt-32 pb-16 md:pb-24 lg:pb-32 overflow-hidden">
+          {/* Subtle gradient overlay */}
+          <div aria-hidden="true" className="absolute inset-0 -z-10">
+            <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900/30 to-sky-900/20"></div>
+          </div>
           <div className="container mx-auto px-4 md:px-6 text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 mb-6">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tighter text-white mb-8 leading-tight">
               Unlock Powerful Real Estate Insights
             </h1>
-            <p className="max-w-3xl mx-auto text-lg md:text-xl text-slate-600 dark:text-slate-400 mb-10">
+            <p className="max-w-3xl mx-auto text-lg md:text-xl text-gray-400 mb-12">
               Our suite provides comprehensive tools for Comparative Market Analysis (CMA) and detailed Buyer Reports,
-              empowering you to make data-driven decisions.
+              empowering you to make data-driven decisions with clarity and precision.
             </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
               <Button
                 asChild
                 size="lg"
-                className="bg-sky-600 hover:bg-sky-700 text-white dark:bg-sky-500 dark:hover:bg-sky-600"
+                className="bg-sky-600 hover:bg-sky-500 text-white shadow-lg hover:shadow-sky-500/50 transition-all duration-300 ease-in-out transform hover:scale-105 px-8 py-3 rounded-lg text-base font-semibold"
               >
                 <Link href="/buyer-report">
                   Buyer Report Tool
@@ -41,7 +51,7 @@ export default function HomePage() {
                 asChild
                 size="lg"
                 variant="outline"
-                className="border-sky-600 text-sky-600 hover:bg-sky-50 dark:border-sky-500 dark:text-sky-400 dark:hover:bg-slate-800"
+                className="border-sky-500 text-sky-400 hover:bg-sky-500/10 hover:text-sky-300 shadow-md hover:shadow-sky-500/30 transition-all duration-300 ease-in-out transform hover:scale-105 px-8 py-3 rounded-lg text-base font-semibold"
               >
                 <Link href="/cma-tool">
                   CMA Tool
@@ -52,45 +62,68 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="py-12 md:py-20 bg-white dark:bg-slate-800/50">
+        {/* Key Features Section */}
+        <section className="py-16 md:py-24 bg-gray-900/70">
           <div className="container mx-auto px-4 md:px-6">
-            <h2 className="text-3xl font-bold text-center text-slate-800 dark:text-slate-100 mb-12">Key Features</h2>
-            <div className="grid md:grid-cols-2 gap-8">
-              <Card className="shadow-lg dark:bg-slate-800">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-xl text-sky-700 dark:text-sky-400">
-                    <UsersIcon className="h-6 w-6" />
-                    Buyer Report Generation
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-slate-600 dark:text-slate-400">
-                    Create detailed reports for buyers, comparing multiple listings against their ideal criteria.
-                    Includes map views, property details, and personalized notes.
-                  </CardDescription>
-                </CardContent>
-              </Card>
-              <Card className="shadow-lg dark:bg-slate-800">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-xl text-sky-700 dark:text-sky-400">
-                    <BuildingIcon className="h-6 w-6" />
-                    Comparative Market Analysis
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-slate-600 dark:text-slate-400">
-                    Perform in-depth CMA by analyzing a subject property against comparable sales. Visualize data on
-                    maps and generate comprehensive reports.
-                  </CardDescription>
-                </CardContent>
-              </Card>
+            <h2 className="text-4xl font-bold text-center text-white mb-16 tracking-tight">
+              Why Choose <span className="text-sky-400">WelcomeSpaces</span>?
+            </h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[
+                {
+                  icon: <UsersIcon className="h-10 w-10 text-sky-400 mb-4" />,
+                  title: "Buyer Report Generation",
+                  description:
+                    "Craft detailed, client-ready reports comparing listings to buyer criteria with map views and notes.",
+                  link: "/buyer-report",
+                },
+                {
+                  icon: <BarChartIcon className="h-10 w-10 text-sky-400 mb-4" />,
+                  title: "In-Depth CMA",
+                  description:
+                    "Perform comprehensive market analysis with subject properties vs. comparables, visualized on maps.",
+                  link: "/cma-tool",
+                },
+                {
+                  icon: <MapIcon className="h-10 w-10 text-sky-400 mb-4" />,
+                  title: "Geospatial Analysis",
+                  description:
+                    "Leverage precise geocoding and map-based visualizations for enhanced property insights.",
+                  link: "/cma-tool", // Or a more specific link if available
+                },
+              ].map((feature) => (
+                <Card
+                  key={feature.title}
+                  className="bg-gray-800/80 border-gray-700/60 shadow-xl hover:shadow-sky-700/30 transition-all duration-300 ease-in-out transform hover:-translate-y-1 rounded-xl overflow-hidden group"
+                >
+                  <CardContent className="p-8 flex flex-col items-center text-center">
+                    {feature.icon}
+                    <CardTitle className="text-2xl font-semibold text-gray-100 mb-3 group-hover:text-sky-400 transition-colors">
+                      {feature.title}
+                    </CardTitle>
+                    <CardDescription className="text-gray-400 mb-6 text-sm leading-relaxed">
+                      {feature.description}
+                    </CardDescription>
+                    <Button
+                      variant="link"
+                      asChild
+                      className="text-sky-400 group-hover:text-sky-300 transition-colors mt-auto"
+                    >
+                      <Link href={feature.link}>
+                        Learn More <ArrowRightIcon className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="py-8 text-center text-slate-500 dark:text-slate-400 border-t dark:border-slate-700">
-        <p>&copy; {new Date().getFullYear()} Real Estate Analytics Suite. All rights reserved.</p>
+      <footer className="py-10 text-center text-gray-500 border-t border-gray-800 bg-black">
+        <p>&copy; {new Date().getFullYear()} WelcomeSpaces. All rights reserved.</p>
+        <p className="text-xs mt-1">Empowering Real Estate Professionals</p>
       </footer>
     </div>
   )
