@@ -15,6 +15,7 @@ import {
   SquareIcon,
   LayersIcon,
   LandPlotIcon,
+  MapPin,
 } from "lucide-react"
 
 interface ComparisonReportProps {
@@ -286,20 +287,15 @@ export default function ComparisonReport({ data, googleMapsApiKey }: ComparisonR
                       </Card>
                     </a>
                     {streetViewImageUrl && clickableStreetViewUrl && (
-                      <Button asChild variant="outline" className="w-full mt-2 text-xs sm:text-sm">
+                      <Button asChild variant="secondary" className="w-full mt-2 text-xs sm:text-sm">
                         <a
                           href={clickableStreetViewUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center justify-center space-x-2"
                         >
-                          <img
-                            src={streetViewImageUrl || "/placeholder.svg"}
-                            alt={`Street View of ${listing.address || "property"}`}
-                            className="w-5 h-5 sm:w-6 sm:h-6 object-cover rounded-full border"
-                            loading="lazy"
-                          />
-                          <span>Streetview</span>
+                          <MapPin className="w-5 h-5 sm:w-6 sm:h-6" />
+                          <span>Street View</span>
                         </a>
                       </Button>
                     )}
