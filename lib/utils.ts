@@ -44,16 +44,11 @@ export const formatSqFt = (value?: string | number | null, showNA = true) => {
 }
 
 // Helper to determine text color based on background brightness
-export function getContrastingTextColor(hexColor?: string): string {
-  if (!hexColor) return "#000000" // Default to black if no color provided
+export function getContrastingTextColor(color?: string): string {
+  const rgb = parseCssColor(color)
+  if (!rgb) return "#000000" // Fallback to black if parsing fails
 
-  // Remove # if present
-  hexColor = hexColor.replace("#", "")
-
-  // Convert hex to RGB
-  const r = Number.parseInt(hexColor.substring(0, 2), 16)
-  const g = Number.parseInt(hexColor.substring(2, 4), 16)
-  const b = Number.parseInt(hexColor.substring(4, 6), 16)
+  const [r, g, b] = rgb
 
   // Calculate HSP (Highly Sensitive Poo)
   // http://alienryderflex.com/hsp.html
@@ -61,4 +56,51 @@ export function getContrastingTextColor(hexColor?: string): string {
 
   // Using HSP value, determine whether black or white text is better
   return hsp > 127.5 ? "#000000" : "#FFFFFF" // Threshold can be adjusted
+}
+
+function parseCssColor(color?: string): [number, number, number] | null {
+  if (!color) return null
+
+  let hex = color.replace(/^#/, "")
+  if (/^[0-9a-fA-F]{6}$/.test(hex)) {
+    const r = parseInt(hex.slice(0, 2), 16)
+    const g = parseInt(hex.slice(2, 4), 16)
+    const b = parseInt(hex.slice(4, 6), 16)
+    return [r, g, b]
+  }
+  if (/^[0-9a-fA-F]{3}$/.test(hex)) {
+    const r = parseInt(hex[0] + hex[0], 16)
+    const g = parseInt(hex[1] + hex[1], 16)
+    const b = parseInt(hex[2] + hex[2], 16)
+    return [r, g, b]
+  }
+
+  const rgbMatch = color
+    .replace(/\s+/g, "")
+    .match(/^rgba?\((\d{1,3}),(\d{1,3}),(\d{1,3})/i)
+  if (rgbMatch) {
+    return [
+      parseInt(rgbMatch[1], 10),
+      parseInt(rgbMatch[2], 10),
+      parseInt(rgbMatch[3], 10),
+    ]
+  }
+
+  if (typeof document !== "undefined") {
+    const el = document.createElement("div")
+    el.style.color = color
+    document.body.appendChild(el)
+    const computed = getComputedStyle(el).color
+    document.body.removeChild(el)
+    const domMatch = computed.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/)
+    if (domMatch) {
+      return [
+        parseInt(domMatch[1], 10),
+        parseInt(domMatch[2], 10),
+        parseInt(domMatch[3], 10),
+      ]
+    }
+  }
+
+  return null
 }
