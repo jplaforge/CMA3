@@ -556,7 +556,7 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
               </div>
               <Card className={cardClassName}>
                 <CardHeader>
-                  <CardTitle className="text-xl">Report Setup</CardTitle>
+                  <CardTitle className="text-xl">Report Setup (Seller)</CardTitle>
                   <CardDescription>Basic information for your CMA report.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">

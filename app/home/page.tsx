@@ -215,13 +215,13 @@ export default function HomePage() {
             {canProceed && (
               <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
                 <Button asChild className="w-full sm:w-auto" style={{ backgroundColor: "#64CC7D", color: "#1E404B" }}>
-                  <Link href="/cma-ai-gen" className="flex items-center">
+                  <Link href="/cma-ai-gen?type=buyer" className="flex items-center">
                     For my Buyer
                     <UsersIcon className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
                 <Button asChild className="w-full sm:w-auto" style={{ backgroundColor: "#64CC7D", color: "#1E404B" }}>
-                  <Link href="/cma-report" className="flex items-center">
+                  <Link href="/cma-ai-gen?type=seller" className="flex items-center">
                     For my Seller
                     <FileText className="ml-2 h-5 w-5" />
                   </Link>
