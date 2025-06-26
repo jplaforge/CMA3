@@ -194,7 +194,11 @@ export default function BuyerReportClientPage({ googleMapsApiKey }: BuyerReportC
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="p-3 pt-1">
-                  <BuyerCriteriaForm data={reportData} setData={setReportData} />
+                  <BuyerCriteriaForm
+                    data={reportData}
+                    setData={setReportData}
+                    googleMapsApiKey={googleMapsApiKey}
+                  />
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="listings-management" className={`border rounded-lg shadow-sm ${cardClassName}`}>
