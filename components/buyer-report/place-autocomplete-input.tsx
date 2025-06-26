@@ -9,11 +9,12 @@ interface PlaceAutocompleteInputProps {
   onChange: (value: string) => void
   onSelect: (address: string, place: google.maps.places.PlaceResult) => void
   onBlur?: (value: string) => void
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void
   placeholder?: string
   apiKey?: string
 }
 
-export default function PlaceAutocompleteInput({ value, onChange, onSelect, onBlur, placeholder, apiKey }: PlaceAutocompleteInputProps) {
+export default function PlaceAutocompleteInput({ value, onChange, onSelect, onBlur, onKeyDown, placeholder, apiKey }: PlaceAutocompleteInputProps) {
   const { isLoaded } = useJsApiLoader({ googleMapsApiKey: apiKey || "", libraries: ["places"] })
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
 
@@ -29,12 +30,26 @@ export default function PlaceAutocompleteInput({ value, onChange, onSelect, onBl
   }
 
   if (!isLoaded) {
-    return <Input value={value} onChange={(e) => onChange(e.target.value)} onBlur={() => onBlur?.(value)} placeholder={placeholder} />
+    return (
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={() => onBlur?.(value)}
+        onKeyDown={onKeyDown}
+        placeholder={placeholder}
+      />
+    )
   }
 
   return (
     <Autocomplete onLoad={handleLoad} onPlaceChanged={handlePlaceChanged}>
-      <Input value={value} onChange={(e) => onChange(e.target.value)} onBlur={() => onBlur?.(value)} placeholder={placeholder} />
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={() => onBlur?.(value)}
+        onKeyDown={onKeyDown}
+        placeholder={placeholder}
+      />
     </Autocomplete>
   )
 }
