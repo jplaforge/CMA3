@@ -213,21 +213,18 @@ export default function HomePage() {
               <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
                 <Button
                   asChild
-                  size="lg"
-                  className="bg-sky-600 hover:bg-sky-500 text-white shadow-lg hover:shadow-sky-500/50 transition-all duration-300 ease-in-out transform hover:scale-105 px-8 py-3 rounded-lg text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
+                  className="bg-sky-700 hover:bg-sky-600 text-gray-100 px-6 py-2.5 rounded-md text-sm font-medium transition-colors flex items-center w-full sm:w-auto"
                 >
-                  <Link href="/buyer-report">
+                  <Link href="/buyer-report" className="flex items-center">
                     For my Buyer
                     <UsersIcon className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
                 <Button
                   asChild
-                  size="lg"
-                  variant="outline"
-                  className="border-sky-500 text-sky-400 hover:bg-sky-500/10 hover:text-sky-300 shadow-md hover:shadow-sky-500/30 transition-all duration-300 ease-in-out transform hover:scale-105 px-8 py-3 rounded-lg text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
+                  className="bg-sky-700 hover:bg-sky-600 text-gray-100 px-6 py-2.5 rounded-md text-sm font-medium transition-colors flex items-center w-full sm:w-auto"
                 >
-                  <Link href="/cma-report">
+                  <Link href="/cma-report" className="flex items-center">
                     For my Seller
                     <FileText className="ml-2 h-5 w-5" />
                   </Link>
