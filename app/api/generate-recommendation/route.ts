@@ -33,12 +33,12 @@ export async function POST(request: NextRequest) {
 
     // Construct a detailed summary of the data for the prompt
     const criteriaSummary = `
-- Price Range: ${formatCurrency(buyerCriteria.priceRange.min)} to ${formatCurrency(buyerCriteria.priceRange.max)}
-- Beds: ${buyerCriteria.beds.min || "Any"}-${buyerCriteria.beds.max || "Any"}
-- Baths: ${buyerCriteria.baths.min || "Any"}-${buyerCriteria.baths.max || "Any"}
-- Square Feet: ${formatNumber(buyerCriteria.sqft.min) || "Any"} to ${formatNumber(buyerCriteria.sqft.max) || "Any"}
-- Must-Have Features: ${buyerCriteria.mustHaveFeatures || "None specified"}
-`
+      - Price Range: ${formatCurrency(buyerCriteria.priceRange.min)} to ${formatCurrency(buyerCriteria.priceRange.max)}
+      - Beds: ${buyerCriteria.beds || "Any"}
+      - Baths: ${buyerCriteria.baths || "Any"}
+      - Square Feet: ${formatNumber(buyerCriteria.sqft) || "Any"}
+      - Must-Have Features: ${buyerCriteria.mustHaveFeatures || "None specified"}
+    `
 
     const listingsSummary = validListings
       .map(
