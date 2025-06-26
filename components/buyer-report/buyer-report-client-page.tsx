@@ -90,15 +90,11 @@ export default function BuyerReportClientPage({ googleMapsApiKey }: BuyerReportC
     setReportData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const activeTabStyle = reportData.primaryColor
-    ? { backgroundColor: reportData.primaryColor, color: textColorForPrimary }
-    : {}
+  const activeTabStyle = { backgroundColor: "var(--primary)", color: textColorForPrimary }
 
   const inactiveTabStyle = reportData.secondaryColor ? { color: textColorForSecondary } : {}
 
-  const generateReportButtonStyle = reportData.primaryColor
-    ? { backgroundColor: reportData.primaryColor, color: textColorForPrimary }
-    : {}
+  const generateReportButtonStyle = { backgroundColor: "var(--primary)", color: textColorForPrimary }
 
   const cardClassName = reportData.secondaryColor ? "bg-card/80 backdrop-blur-sm" : "bg-card"
 
@@ -106,7 +102,7 @@ export default function BuyerReportClientPage({ googleMapsApiKey }: BuyerReportC
     <div className="flex flex-col h-screen p-4 sm:p-6 md:p-8">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 shrink-0">
         <div className="flex items-center gap-3">
-          <HomeIcon className="h-10 w-10" style={{ color: reportData.primaryColor || "hsl(var(--primary))" }} />
+          <HomeIcon className="h-10 w-10" style={{ color: "var(--primary)" }} />
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Buyer Tour & Analysis Tool</h1>
             <p className="text-muted-foreground">
@@ -125,13 +121,13 @@ export default function BuyerReportClientPage({ googleMapsApiKey }: BuyerReportC
         <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
           <div className="flex flex-col h-full p-4 space-y-6 overflow-y-auto">
             <div className="flex items-center gap-2 text-xl font-semibold mb-2">
-              <Settings2Icon className="h-6 w-6" style={{ color: reportData.primaryColor }} />
+              <Settings2Icon className="h-6 w-6" style={{ color: "var(--primary)" }} />
               Report Configuration
             </div>
             <Card className={cardClassName}>
               <CardHeader>
                 <CardTitle className="text-xl flex items-center gap-2">
-                  <ClipboardListIcon className="h-5 w-5" style={{ color: reportData.primaryColor }} />
+                  <ClipboardListIcon className="h-5 w-5" style={{ color: "var(--primary)" }} />
                   Report Details
                 </CardTitle>
               </CardHeader>
@@ -185,7 +181,7 @@ export default function BuyerReportClientPage({ googleMapsApiKey }: BuyerReportC
               <AccordionItem value="ideal-property-criteria" className={`border rounded-lg shadow-sm ${cardClassName}`}>
                 <AccordionTrigger className="text-lg font-semibold p-3 hover:no-underline data-[state=open]:border-b">
                   <div className="flex items-center gap-2">
-                    <DollarSignIcon className="h-5 w-5" style={{ color: reportData.primaryColor }} />
+                    <DollarSignIcon className="h-5 w-5" style={{ color: "var(--primary)" }} />
                     Step 1: Ideal Property
                   </div>
                 </AccordionTrigger>
@@ -196,7 +192,7 @@ export default function BuyerReportClientPage({ googleMapsApiKey }: BuyerReportC
               <AccordionItem value="listings-management" className={`border rounded-lg shadow-sm ${cardClassName}`}>
                 <AccordionTrigger className="text-lg font-semibold p-3 hover:no-underline data-[state=open]:border-b">
                   <div className="flex items-center gap-2">
-                    <ListChecksIcon className="h-5 w-5" style={{ color: reportData.primaryColor }} />
+                    <ListChecksIcon className="h-5 w-5" style={{ color: "var(--primary)" }} />
                     Step 2: Manage Listings
                   </div>
                 </AccordionTrigger>
@@ -207,7 +203,7 @@ export default function BuyerReportClientPage({ googleMapsApiKey }: BuyerReportC
               <AccordionItem value="realtor-notes" className={`border rounded-lg shadow-sm ${cardClassName}`}>
                 <AccordionTrigger className="text-lg font-semibold p-3 hover:no-underline data-[state=open]:border-b">
                   <div className="flex items-center gap-2">
-                    <MessageSquareIcon className="h-5 w-5" style={{ color: reportData.primaryColor }} />
+                    <MessageSquareIcon className="h-5 w-5" style={{ color: "var(--primary)" }} />
                     Step 3: Notes & Recs
                   </div>
                 </AccordionTrigger>
@@ -222,13 +218,13 @@ export default function BuyerReportClientPage({ googleMapsApiKey }: BuyerReportC
         <ResizablePanel defaultSize={70} minSize={50}>
           <div className="flex flex-col h-full p-4 space-y-6 overflow-y-auto">
             <div className="flex items-center gap-2 text-xl font-semibold">
-              <EyeIcon className="h-6 w-6" style={{ color: reportData.primaryColor }} />
+              <EyeIcon className="h-6 w-6" style={{ color: "var(--primary)" }} />
               Report Preview & Analysis
             </div>
             <Card className={`${cardClassName} flex-grow flex flex-col`}>
               <CardHeader className="shrink-0">
                 <CardTitle className="text-xl flex items-center gap-2">
-                  <Edit3Icon className="h-5 w-5" style={{ color: reportData.primaryColor }} />
+                  <Edit3Icon className="h-5 w-5" style={{ color: "var(--primary)" }} />
                   Analysis & Comparison
                 </CardTitle>
               </CardHeader>

@@ -536,7 +536,7 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
           <h1 className="text-3xl font-bold flex items-center gap-3">
             <FileSignatureIcon
               className="h-10 w-10"
-              style={{ color: cmaReportData.primaryColor || "hsl(var(--primary))" }}
+              style={{ color: "var(--primary)" }}
             />
             Comparative Market Analysis (CMA) Tool
           </h1>
@@ -551,7 +551,7 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
           <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
             <div className="flex flex-col h-full p-4 space-y-6 overflow-y-auto">
               <div className="flex items-center gap-2 text-xl font-semibold mb-2">
-                <Settings2Icon className="h-6 w-6" style={{ color: cmaReportData.primaryColor }} />
+                <Settings2Icon className="h-6 w-6" style={{ color: "var(--primary)" }} />
                 CMA Configuration
               </div>
               <Card className={cardClassName}>
@@ -624,7 +624,7 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
                 <AccordionItem value="subject-property" className={`border rounded-lg shadow-sm ${cardClassName}`}>
                   <AccordionTrigger className="px-4 py-3 text-lg font-medium hover:no-underline data-[state=open]:border-b">
                     <div className="flex items-center gap-2">
-                      <HomeIcon className="h-5 w-5" style={{ color: cmaReportData.primaryColor }} />
+                      <HomeIcon className="h-5 w-5" style={{ color: "var(--primary)" }} />
                       Subject Property
                     </div>
                   </AccordionTrigger>
@@ -634,7 +634,7 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
                 <AccordionItem value="comparables" className={`border rounded-lg shadow-sm ${cardClassName}`}>
                   <AccordionTrigger className="px-4 py-3 text-lg font-medium hover:no-underline data-[state=open]:border-b">
                     <div className="flex items-center gap-2">
-                      <UsersIcon className="h-5 w-5" style={{ color: cmaReportData.primaryColor }} />
+                      <UsersIcon className="h-5 w-5" style={{ color: "var(--primary)" }} />
                       Comparables ({cmaReportData.comparableProperties.length})
                     </div>
                   </AccordionTrigger>
@@ -667,7 +667,7 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
                 <AccordionItem value="analysis-conclusion" className={`border rounded-lg shadow-sm ${cardClassName}`}>
                   <AccordionTrigger className="px-4 py-3 text-lg font-medium hover:no-underline data-[state=open]:border-b">
                     <div className="flex items-center gap-2">
-                      <BarChartIcon className="h-5 w-5" style={{ color: cmaReportData.primaryColor }} />
+                      <BarChartIcon className="h-5 w-5" style={{ color: "var(--primary)" }} />
                       AI Analysis
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -686,7 +686,7 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
                       onClick={handleGenerateAiAnalysis}
                       disabled={isAiAnalysisLoading || !hasSubjectDetails || comparableDetailsCount === 0}
                       className="w-full mb-2"
-                      style={{ backgroundColor: cmaReportData.primaryColor, color: textColorForPrimary }}
+                      style={{ backgroundColor: "var(--primary)", color: textColorForPrimary }}
                     >
                       <Sparkles className="h-4 w-4 mr-2" />
                       {isAiAnalysisLoading ? "Generating..." : "Generate AI Analysis & Pricing"}
@@ -745,20 +745,20 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
             <div className="flex flex-col h-full p-4 space-y-4 overflow-y-auto">
               <div className="flex justify-between items-center shrink-0">
                 <h2 className="text-xl font-semibold flex items-center gap-2">
-                  <EyeIcon className="h-6 w-6" style={{ color: cmaReportData.primaryColor }} />
+                  <EyeIcon className="h-6 w-6" style={{ color: "var(--primary)" }} />
                   Report Preview
                 </h2>
                 <Button
                   variant="outline"
                   onClick={() => typeof window !== "undefined" && window.print()}
-                  style={{ borderColor: cmaReportData.primaryColor, color: cmaReportData.primaryColor }}
+                  style={{ borderColor: "var(--primary)", color: "var(--primary)" }}
                   onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = cmaReportData.primaryColor || ""
+                    e.currentTarget.style.backgroundColor = "var(--primary)"
                     e.currentTarget.style.color = textColorForPrimary
                   }}
                   onMouseOut={(e) => {
                     e.currentTarget.style.backgroundColor = "transparent"
-                    e.currentTarget.style.color = cmaReportData.primaryColor || ""
+                    e.currentTarget.style.color = "var(--primary)"
                   }}
                 >
                   Print Report

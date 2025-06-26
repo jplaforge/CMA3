@@ -4,7 +4,7 @@ import type React from "react"
 
 import "./globals.css"
 import { useEffect, useState } from "react"
-import { getContrastingTextColor } from "@/lib/utils" // Assuming getContrastingTextColor is in lib/utils.ts
+import { getContrastingTextColor, normalizeColorToHex } from "@/lib/utils"
 
 interface RealtorProfile {
   realtor_url: string
@@ -23,24 +23,44 @@ export default function ClientLayout({
 
   useEffect(() => {
     const realtorProfileString = localStorage.getItem("realtorProfile")
+    let originalBg = ""
+    let originalColor = ""
+    let normalizedPrimary: string | null = null
+    let normalizedSecondary: string | null = null
 
     if (realtorProfileString) {
       try {
         const profile: RealtorProfile = JSON.parse(realtorProfileString)
 
-        if (profile && profile.secondary_color) {
-          const contrastingTextColor = getContrastingTextColor(profile.secondary_color)
+        normalizedPrimary = normalizeColorToHex(profile.primary_color || "")
+        normalizedSecondary = normalizeColorToHex(profile.secondary_color || "")
 
-          setBodyStyle({
-            backgroundColor: profile.secondary_color,
-            color: contrastingTextColor,
-          })
-        } else {
+        if (normalizedPrimary) {
+          document.documentElement.style.setProperty("--primary", normalizedPrimary)
+        }
+        if (normalizedSecondary) {
+          document.documentElement.style.setProperty("--secondary", normalizedSecondary)
+          const contrastingTextColor = getContrastingTextColor(normalizedSecondary)
+
+          originalBg = document.body.style.backgroundColor
+          originalColor = document.body.style.color
+          setBodyStyle({ backgroundColor: "var(--secondary)", color: contrastingTextColor })
         }
       } catch (error) {
         console.error("[ClientLayout] Failed to parse realtor profile from localStorage:", error)
       }
-    } else {
+    }
+
+    return () => {
+      if (normalizedPrimary) {
+        document.documentElement.style.removeProperty("--primary")
+      }
+      if (normalizedSecondary) {
+        document.documentElement.style.removeProperty("--secondary")
+      }
+      if (originalBg || originalColor) {
+        setBodyStyle({ backgroundColor: originalBg, color: originalColor })
+      }
     }
   }, [])
 

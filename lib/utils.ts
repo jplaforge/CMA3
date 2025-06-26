@@ -58,6 +58,17 @@ export function getContrastingTextColor(color?: string): string {
   return hsp > 127.5 ? "#000000" : "#FFFFFF" // Threshold can be adjusted
 }
 
+// Normalize any CSS color string to a hex value that can be used reliably in
+// custom properties. Returns `null` if the color cannot be parsed.
+export function normalizeColorToHex(color?: string): string | null {
+  const rgb = parseCssColor(color)
+  if (!rgb) return null
+  const [r, g, b] = rgb
+  return `#${r.toString(16).padStart(2, "0")}${g
+    .toString(16)
+    .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`
+}
+
 function parseCssColor(color?: string): [number, number, number] | null {
   if (!color) return null
 
