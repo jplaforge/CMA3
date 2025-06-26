@@ -8,7 +8,20 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Trash2, PlusCircle, Sparkles, Info, MapPin, Loader2 } from "lucide-react" // Added Loader2
+import {
+  Trash2,
+  PlusCircle,
+  Sparkles,
+  Info,
+  MapPin,
+  Loader2,
+  HomeIcon,
+  Settings2Icon,
+  EyeIcon,
+  FileSignatureIcon,
+  UsersIcon,
+  BarChartIcon,
+} from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import {
   type CmaReportDataState,
@@ -18,6 +31,9 @@ import {
 } from "@/lib/cma-types"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import ReportPreview from "@/components/cma/report-preview"
+import Link from "next/link"
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
+import { getContrastingTextColor } from "@/lib/utils"
 
 interface CmaFormProps {
   initialDataProp?: CmaReportDataState
@@ -31,11 +47,35 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
   const { toast } = useToast()
   const [isAiAnalysisLoading, setIsAiAnalysisLoading] = useState(false)
   const [activeAccordionItems, setActiveAccordionItems] = useState<string[]>(["subject-property", "comparables"])
+  const [textColorForPrimary, setTextColorForPrimary] = useState("#ffffff")
 
   const prevSubjectUrlRef = useRef<string>(cmaReportData.subjectProperty.listingUrl || "")
   const prevCompUrlsRef = useRef<Record<string, string>>(
     Object.fromEntries(cmaReportData.comparableProperties.map((c) => [c.id, c.listingUrl || ""])),
   )
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedProfile = localStorage.getItem("realtorProfile")
+      if (storedProfile) {
+        try {
+          const profile = JSON.parse(storedProfile)
+          setCmaReportData((prev) => ({
+            ...prev,
+            preparedBy: profile.realtor_name || "",
+            realtorAgency: profile.agency_name || "",
+            primaryColor: profile.primary_color || prev.primaryColor,
+            secondaryColor: profile.secondary_color || prev.secondaryColor,
+          }))
+          if (profile.primary_color) {
+            setTextColorForPrimary(getContrastingTextColor(profile.primary_color))
+          }
+        } catch (e) {
+          console.error("Failed to parse realtor profile from local storage", e)
+        }
+      }
+    }
+  }, [])
 
   const hasSubjectDetails = !!cmaReportData.subjectProperty.address && !!cmaReportData.subjectProperty.fetchedPrice
   const comparableDetailsCount = cmaReportData.comparableProperties.filter(
@@ -46,23 +86,46 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     section: keyof CmaReportDataState | "subjectProperty" | "comparableProperty",
     id?: string,
-    field?: keyof PropertyInput,
+    field?: keyof PropertyInput | "preparedBy" | "realtorAgency",
   ) => {
     const { name, value } = e.target
     setCmaReportData((prev) => {
       const newState = { ...prev }
-      if (section === "subjectProperty" && field) {
-        newState.subjectProperty = { ...newState.subjectProperty, [field]: value }
-      } else if (section === "comparableProperty" && id && field) {
+      if (section === "subjectProperty" && field && field !== "preparedBy" && field !== "realtorAgency") {
+        newState.subjectProperty = { ...newState.subjectProperty, [field as keyof PropertyInput]: value }
+      } else if (
+        section === "comparableProperty" &&
+        id &&
+        field &&
+        field !== "preparedBy" &&
+        field !== "realtorAgency"
+      ) {
         newState.comparableProperties = newState.comparableProperties.map((comp) =>
-          comp.id === id ? { ...comp, [field]: value } : comp,
+          comp.id === id ? { ...comp, [field as keyof PropertyInput]: value } : comp,
         )
       } else if (section !== "subjectProperty" && section !== "comparableProperty") {
-        const topLevelField = (field || name) as keyof CmaReportDataState
-        if (topLevelField === "suggestedPriceRange") {
+        const topLevelField = (field || name) as keyof Omit<
+          CmaReportDataState,
+          | "subjectProperty"
+          | "comparableProperties"
+          | "suggestedPriceRange"
+          | "priceAdjustmentNotes"
+          | "generalNotes"
+          | "primaryColor"
+          | "secondaryColor"
+        >
+        if (
+          topLevelField === "reportTitle" ||
+          topLevelField === "clientName" ||
+          topLevelField === "preparedDate" ||
+          topLevelField === "preparedBy" ||
+          topLevelField === "realtorAgency"
+        ) {
+          newState[topLevelField] = value as any
+        } else if (topLevelField === "suggestedPriceRange") {
           newState.suggestedPriceRange = { ...newState.suggestedPriceRange, [name]: value }
         } else {
-          ;(newState[topLevelField] as any) = value
+          ;(newState[topLevelField as keyof CmaReportDataState] as any) = value
         }
       }
       return newState
@@ -464,175 +527,249 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
     )
   }
 
+  const cardClassName = cmaReportData.secondaryColor ? "bg-card/80 backdrop-blur-sm" : "bg-card"
+
   return (
     <TooltipProvider>
-      <div className="space-y-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Report Setup</CardTitle>
-            <CardDescription>Basic information for your CMA report.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="reportTitle">Report Title</Label>
-                <Input
-                  id="reportTitle"
-                  name="reportTitle"
-                  value={cmaReportData.reportTitle}
-                  onChange={(e) => handleInputChange(e, "reportTitle")}
-                  placeholder="e.g., CMA for 123 Main St"
-                />
+      <div className="flex flex-col h-screen p-4 sm:p-6 md:p-8">
+        <header className="flex justify-between items-center mb-6 shrink-0">
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <FileSignatureIcon
+              className="h-10 w-10"
+              style={{ color: cmaReportData.primaryColor || "hsl(var(--primary))" }}
+            />
+            Comparative Market Analysis (CMA) Tool
+          </h1>
+          <Button asChild variant="outline">
+            <Link href="/home">
+              <HomeIcon className="mr-2 h-4 w-4" /> Home
+            </Link>
+          </Button>
+        </header>
+
+        <ResizablePanelGroup direction="horizontal" className="flex-grow rounded-lg border overflow-hidden">
+          <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
+            <div className="flex flex-col h-full p-4 space-y-6 overflow-y-auto">
+              <div className="flex items-center gap-2 text-xl font-semibold mb-2">
+                <Settings2Icon className="h-6 w-6" style={{ color: cmaReportData.primaryColor }} />
+                CMA Configuration
               </div>
-              <div>
-                <Label htmlFor="clientName">Client Name</Label>
-                <Input
-                  id="clientName"
-                  name="clientName"
-                  value={cmaReportData.clientName}
-                  onChange={(e) => handleInputChange(e, "clientName")}
-                  placeholder="e.g., John Doe"
-                />
+              <Card className={cardClassName}>
+                <CardHeader>
+                  <CardTitle className="text-xl">Report Setup</CardTitle>
+                  <CardDescription>Basic information for your CMA report.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <Label htmlFor="reportTitle">Report Title</Label>
+                      <Input
+                        id="reportTitle"
+                        name="reportTitle"
+                        value={cmaReportData.reportTitle}
+                        onChange={(e) => handleInputChange(e, "reportTitle")}
+                        placeholder="e.g., CMA for 123 Main St"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="clientName">Client Name (Seller)</Label>
+                      <Input
+                        id="clientName"
+                        name="clientName"
+                        value={cmaReportData.clientName}
+                        onChange={(e) => handleInputChange(e, "clientName")}
+                        placeholder="e.g., John Doe"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="preparedDate">Date Prepared</Label>
+                      <Input
+                        id="preparedDate"
+                        name="preparedDate"
+                        type="date"
+                        value={cmaReportData.preparedDate}
+                        onChange={(e) => handleInputChange(e, "preparedDate")}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="preparedBy">Prepared By (Realtor)</Label>
+                      <Input
+                        id="preparedBy"
+                        name="preparedBy"
+                        value={cmaReportData.preparedBy}
+                        onChange={(e) => handleInputChange(e, "preparedBy", undefined, "preparedBy")}
+                        placeholder="Your Name"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="realtorAgency">Realtor Agency</Label>
+                      <Input
+                        id="realtorAgency"
+                        name="realtorAgency"
+                        value={cmaReportData.realtorAgency}
+                        onChange={(e) => handleInputChange(e, "realtorAgency", undefined, "realtorAgency")}
+                        placeholder="Your Agency Name"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Accordion
+                type="multiple"
+                value={activeAccordionItems}
+                onValueChange={setActiveAccordionItems}
+                className="w-full space-y-4"
+              >
+                <AccordionItem value="subject-property" className={`border rounded-lg shadow-sm ${cardClassName}`}>
+                  <AccordionTrigger className="px-4 py-3 text-lg font-medium hover:no-underline data-[state=open]:border-b">
+                    <div className="flex items-center gap-2">
+                      <HomeIcon className="h-5 w-5" style={{ color: cmaReportData.primaryColor }} />
+                      Subject Property
+                    </div>
+                  </AccordionTrigger>
+                  {renderPropertyFields(cmaReportData.subjectProperty, "subjectProperty")}
+                </AccordionItem>
+
+                <AccordionItem value="comparables" className={`border rounded-lg shadow-sm ${cardClassName}`}>
+                  <AccordionTrigger className="px-4 py-3 text-lg font-medium hover:no-underline data-[state=open]:border-b">
+                    <div className="flex items-center gap-2">
+                      <UsersIcon className="h-5 w-5" style={{ color: cmaReportData.primaryColor }} />
+                      Comparables ({cmaReportData.comparableProperties.length})
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pt-0 pb-4">
+                    <div className="space-y-4">
+                      {cmaReportData.comparableProperties.map((comp, index) => (
+                        <Card key={comp.id} className={`relative shadow-sm ${cardClassName}`}>
+                          <CardHeader className="flex flex-row items-center justify-between pb-2 pt-3 px-3">
+                            <CardTitle className="text-md">Comp #{index + 1}</CardTitle>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeComparableProperty(comp.id)}
+                              className="text-destructive hover:bg-destructive/10 absolute top-1 right-1"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span className="sr-only">Remove</span>
+                            </Button>
+                          </CardHeader>
+                          {renderPropertyFields(comp, "comparableProperty")}
+                        </Card>
+                      ))}
+                    </div>
+                    <Button onClick={addComparableProperty} variant="outline" className="mt-4 w-full">
+                      <PlusCircle className="h-4 w-4 mr-2" /> Add Comparable
+                    </Button>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="analysis-conclusion" className={`border rounded-lg shadow-sm ${cardClassName}`}>
+                  <AccordionTrigger className="px-4 py-3 text-lg font-medium hover:no-underline data-[state=open]:border-b">
+                    <div className="flex items-center gap-2">
+                      <BarChartIcon className="h-5 w-5" style={{ color: cmaReportData.primaryColor }} />
+                      AI Analysis
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-4 w-4 ml-1 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs text-sm">
+                            Use AI to analyze properties and suggest pricing. You can edit the results.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pt-2 pb-4 space-y-4">
+                    <Button
+                      onClick={handleGenerateAiAnalysis}
+                      disabled={isAiAnalysisLoading || !hasSubjectDetails || comparableDetailsCount === 0}
+                      className="w-full mb-2"
+                      style={{ backgroundColor: cmaReportData.primaryColor, color: textColorForPrimary }}
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      {isAiAnalysisLoading ? "Generating..." : "Generate AI Analysis & Pricing"}
+                    </Button>
+                    <div>
+                      <Label htmlFor="suggestedPriceRangeLow">Suggested Price Range (Low)</Label>
+                      <Input
+                        id="suggestedPriceRangeLow"
+                        name="low"
+                        type="number"
+                        value={cmaReportData.suggestedPriceRange.low}
+                        onChange={(e) => handleInputChange(e, "suggestedPriceRange")}
+                        placeholder="e.g., 480000"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="suggestedPriceRangeHigh">Suggested Price Range (High)</Label>
+                      <Input
+                        id="suggestedPriceRangeHigh"
+                        name="high"
+                        type="number"
+                        value={cmaReportData.suggestedPriceRange.high}
+                        onChange={(e) => handleInputChange(e, "suggestedPriceRange")}
+                        placeholder="e.g., 520000"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="priceAdjustmentNotes">Price Adjustment Notes</Label>
+                      <Textarea
+                        id="priceAdjustmentNotes"
+                        name="priceAdjustmentNotes"
+                        value={cmaReportData.priceAdjustmentNotes}
+                        onChange={(e) => handleInputChange(e, "priceAdjustmentNotes")}
+                        placeholder="Notes on comparable adjustments..."
+                        rows={3}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="generalNotes">General Notes & Summary</Label>
+                      <Textarea
+                        id="generalNotes"
+                        name="generalNotes"
+                        value={cmaReportData.generalNotes}
+                        onChange={(e) => handleInputChange(e, "generalNotes")}
+                        placeholder="Overall market conditions, recommendations..."
+                        rows={3}
+                      />
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize={70} minSize={50}>
+            <div className="flex flex-col h-full p-4 space-y-4 overflow-y-auto">
+              <div className="flex justify-between items-center shrink-0">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <EyeIcon className="h-6 w-6" style={{ color: cmaReportData.primaryColor }} />
+                  Report Preview
+                </h2>
+                <Button
+                  variant="outline"
+                  onClick={() => typeof window !== "undefined" && window.print()}
+                  style={{ borderColor: cmaReportData.primaryColor, color: cmaReportData.primaryColor }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = cmaReportData.primaryColor || ""
+                    e.currentTarget.style.color = textColorForPrimary
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = "transparent"
+                    e.currentTarget.style.color = cmaReportData.primaryColor || ""
+                  }}
+                >
+                  Print Report
+                </Button>
               </div>
-              <div>
-                <Label htmlFor="preparedDate">Date Prepared</Label>
-                <Input
-                  id="preparedDate"
-                  name="preparedDate"
-                  type="date"
-                  value={cmaReportData.preparedDate}
-                  onChange={(e) => handleInputChange(e, "preparedDate")}
-                />
+              <div className={`border rounded-lg shadow-sm overflow-hidden flex-grow ${cardClassName}`}>
+                {ReportPreview && <ReportPreview data={cmaReportData} apiKey={googleMapsApiKey} />}
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        <Accordion
-          type="multiple"
-          value={activeAccordionItems}
-          onValueChange={setActiveAccordionItems}
-          className="w-full space-y-4"
-        >
-          <AccordionItem value="subject-property" className="border rounded-lg shadow-sm">
-            <AccordionTrigger className="px-6 py-4 text-lg font-medium hover:no-underline data-[state=open]:border-b">
-              Subject Property Details
-            </AccordionTrigger>
-            {renderPropertyFields(cmaReportData.subjectProperty, "subjectProperty")}
-          </AccordionItem>
-
-          <AccordionItem value="comparables" className="border rounded-lg shadow-sm">
-            <AccordionTrigger className="px-6 py-4 text-lg font-medium hover:no-underline data-[state=open]:border-b">
-              Comparable Properties ({cmaReportData.comparableProperties.length})
-            </AccordionTrigger>
-            <AccordionContent className="px-6 pt-0 pb-6">
-              <div className="space-y-6">
-                {cmaReportData.comparableProperties.map((comp, index) => (
-                  <Card key={comp.id} className="relative shadow-sm">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <CardTitle className="text-md">Comparable Property #{index + 1}</CardTitle>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeComparableProperty(comp.id)}
-                        className="text-destructive hover:bg-destructive/10 absolute top-2 right-2"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Remove</span>
-                      </Button>
-                    </CardHeader>
-                    {renderPropertyFields(comp, "comparableProperty")}
-                  </Card>
-                ))}
-              </div>
-              <Button onClick={addComparableProperty} variant="outline" className="mt-6 w-full">
-                <PlusCircle className="h-4 w-4 mr-2" /> Add Comparable Property
-              </Button>
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="analysis-conclusion" className="border rounded-lg shadow-sm">
-            <AccordionTrigger className="px-6 py-4 text-lg font-medium hover:no-underline data-[state=open]:border-b">
-              AI-Powered Analysis & Conclusion
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-4 w-4 ml-2 text-muted-foreground cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="max-w-xs text-sm">
-                    Use AI to analyze properties and suggest pricing. You can edit the results.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </AccordionTrigger>
-            <AccordionContent className="px-6 pt-4 pb-6 space-y-4">
-              <Button
-                onClick={handleGenerateAiAnalysis}
-                disabled={isAiAnalysisLoading || !hasSubjectDetails || comparableDetailsCount === 0}
-                className="w-full mb-4"
-              >
-                <Sparkles className="h-4 w-4 mr-2" />
-                {isAiAnalysisLoading ? "Generating Analysis..." : "Generate AI Analysis & Pricing"}
-              </Button>
-              <div>
-                <Label htmlFor="suggestedPriceRangeLow">Suggested Price Range (Low)</Label>
-                <Input
-                  id="suggestedPriceRangeLow"
-                  name="low"
-                  type="number"
-                  value={cmaReportData.suggestedPriceRange.low}
-                  onChange={(e) => handleInputChange(e, "suggestedPriceRange")}
-                  placeholder="e.g., 480000"
-                />
-              </div>
-              <div>
-                <Label htmlFor="suggestedPriceRangeHigh">Suggested Price Range (High)</Label>
-                <Input
-                  id="suggestedPriceRangeHigh"
-                  name="high"
-                  type="number"
-                  value={cmaReportData.suggestedPriceRange.high}
-                  onChange={(e) => handleInputChange(e, "suggestedPriceRange")}
-                  placeholder="e.g., 520000"
-                />
-              </div>
-              <div>
-                <Label htmlFor="priceAdjustmentNotes">Price Adjustment Notes</Label>
-                <Textarea
-                  id="priceAdjustmentNotes"
-                  name="priceAdjustmentNotes"
-                  value={cmaReportData.priceAdjustmentNotes}
-                  onChange={(e) => handleInputChange(e, "priceAdjustmentNotes")}
-                  placeholder="Notes on comparable adjustments..."
-                  rows={4}
-                />
-              </div>
-              <div>
-                <Label htmlFor="generalNotes">General Notes & Summary</Label>
-                <Textarea
-                  id="generalNotes"
-                  name="generalNotes"
-                  value={cmaReportData.generalNotes}
-                  onChange={(e) => handleInputChange(e, "generalNotes")}
-                  placeholder="Overall market conditions, recommendations..."
-                  rows={4}
-                />
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-
-        <section className="mt-12">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-semibold">Report Preview</h2>
-            <Button variant="outline" onClick={() => typeof window !== "undefined" && window.print()}>
-              Print Report
-            </Button>
-          </div>
-          <div className="border rounded-lg shadow-sm overflow-hidden bg-background">
-            {ReportPreview && <ReportPreview data={cmaReportData} apiKey={googleMapsApiKey} />}
-          </div>
-        </section>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     </TooltipProvider>
   )

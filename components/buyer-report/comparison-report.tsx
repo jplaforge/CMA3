@@ -1,5 +1,7 @@
 "use client"
 
+import { Label } from "@/components/ui/label"
+
 import React from "react"
 import { Button } from "@/components/ui/button"
 import type { BuyerReportState, ListingProperty } from "@/lib/buyer-report-types"
@@ -16,307 +18,315 @@ import {
   LayersIcon,
   LandPlotIcon,
   MapPin,
+  BuildingIcon,
+  CalendarDaysIcon,
+  TagIcon,
+  InfoIcon,
+  MessageSquareIcon,
 } from "lucide-react"
+import { formatCurrency, formatNumber, formatDate } from "@/lib/utils"
+import { getContrastingTextColor } from "@/lib/utils"
 
 interface ComparisonReportProps {
   data: BuyerReportState
   googleMapsApiKey?: string
+  cardClassName?: string
 }
 
 const ComparisonIcon = ({ meets, className }: { meets: boolean | null; className?: string }) => {
-  if (meets === null) return <AlertCircle className={`h-3 w-3 text-yellow-500 inline-block ml-0.5 ${className}`} />
+  if (meets === null) return <AlertCircle className={`h-4 w-4 text-yellow-500 inline-block ml-1 ${className}`} />
   return meets ? (
-    <CheckCircle2 className={`h-3 w-3 text-green-600 inline-block ml-0.5 ${className}`} />
+    <CheckCircle2 className={`h-4 w-4 text-green-600 inline-block ml-1 ${className}`} />
   ) : (
-    <XCircle className={`h-3 w-3 text-red-600 inline-block ml-0.5 ${className}`} />
+    <XCircle className={`h-4 w-4 text-red-600 inline-block ml-1 ${className}`} />
   )
-}
-
-const formatCurrency = (value?: string) => {
-  if (!value) return ""
-  const num = Number.parseFloat(value)
-  return isNaN(num) ? "" : `$${num.toLocaleString()}`
-}
-
-const formatNumber = (value?: string) => {
-  if (!value) return ""
-  const num = Number.parseFloat(value)
-  return isNaN(num) ? "" : num.toLocaleString()
 }
 
 interface StatPillProps {
   icon: React.ReactNode
-  value?: string
+  value?: string | number | null
   label: string
-  meets: boolean | null
+  meets?: boolean | null
+  formatter?: (value: any) => string
+  primaryColor?: string
 }
 
-const StatPill: React.FC<StatPillProps> = ({ icon, value, label, meets }) => {
-  const displayValue = value ? formatNumber(value) : "N/A"
+const StatPill: React.FC<StatPillProps> = ({ icon, value, label, meets, formatter, primaryColor }) => {
+  const displayValue = formatter ? formatter(value) : value ? formatNumber(String(value)) : "N/A"
+  const iconColor = primaryColor || "hsl(var(--primary))"
   return (
-    <div className="flex flex-col items-center text-center">
-      <div className="flex items-center text-muted-foreground mb-0.5">
-        {React.cloneElement(icon as React.ReactElement, { size: 20 })}
+    <div className="flex flex-col items-center text-center p-2.5 rounded-md bg-background/70 dark:bg-muted/30 flex-1 min-w-[75px] border">
+      <div className="mb-1" style={{ color: iconColor }}>
+        {React.cloneElement(icon as React.ReactElement, { size: 22 })}
       </div>
-      <div className="text-sm font-medium">
+      <div className="text-sm font-semibold text-foreground">
         {displayValue}
-        <ComparisonIcon meets={meets} />
+        {meets !== undefined && <ComparisonIcon meets={meets} />}
       </div>
-      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-xs text-muted-foreground mt-0.5">{label}</div>
     </div>
   )
 }
 
-export default function ComparisonReport({ data, googleMapsApiKey }: ComparisonReportProps) {
-  const { clientName, preparedDate, buyerCriteria, listings } = data
+export default function ComparisonReport({ data, googleMapsApiKey, cardClassName = "bg-card" }: ComparisonReportProps) {
+  const { clientName, preparedDate, buyerCriteria, listings, primaryColor } = data
+  const textColorForPrimary = primaryColor ? getContrastingTextColor(primaryColor) : "hsl(var(--primary-foreground))"
 
-  // Updated checkCriteria: if max is empty or not provided, it's a "min" check (value >= min)
-  // If min is empty or not provided, it's a "max" check (value <= max)
-  const checkCriteria = (listingValueStr: string, criteriaMinStr: string, criteriaMaxStr?: string): boolean | null => {
+  const checkCriteria = (
+    listingValueStr?: string,
+    criteriaMinStr?: string,
+    criteriaMaxStr?: string,
+  ): boolean | null => {
+    if (listingValueStr === "" || listingValueStr === undefined || listingValueStr === null) return null
     const numListingValue = Number.parseFloat(listingValueStr)
-    const numCriteriaMin = Number.parseFloat(criteriaMinStr)
-    const numCriteriaMax = criteriaMaxStr ? Number.parseFloat(criteriaMaxStr) : Number.NaN
+    if (isNaN(numListingValue)) return null
 
-    if (listingValueStr === "" || listingValueStr === undefined || listingValueStr === null) return null // No listing data
-    if (isNaN(numListingValue)) return null // Listing data is not a number
+    const numCriteriaMin = criteriaMinStr ? Number.parseFloat(criteriaMinStr) : Number.NaN
+    const numCriteriaMax = criteriaMaxStr ? Number.parseFloat(criteriaMaxStr) : Number.NaN
 
     const hasMin = criteriaMinStr !== "" && !isNaN(numCriteriaMin)
     const hasMax = criteriaMaxStr !== "" && !isNaN(numCriteriaMax)
 
-    if (!hasMin && !hasMax) return null // No criteria set
+    if (!hasMin && !hasMax) return null
 
-    if (hasMin && hasMax) {
-      return numListingValue >= numCriteriaMin && numListingValue <= numCriteriaMax
-    }
-    if (hasMin) {
-      return numListingValue >= numCriteriaMin
-    }
-    if (hasMax) {
-      return numListingValue <= numCriteriaMax
-    }
+    if (hasMin && hasMax) return numListingValue >= numCriteriaMin && numListingValue <= numCriteriaMax
+    if (hasMin) return numListingValue >= numCriteriaMin
+    if (hasMax) return numListingValue <= numCriteriaMax
     return null
   }
 
   const calculateAge = (yearBuilt?: string): string | null => {
     if (!yearBuilt) return null
     const year = Number.parseInt(yearBuilt, 10)
-    if (isNaN(year) || year <= 1800) return null
+    if (isNaN(year) || year <= 1800 || year > new Date().getFullYear() + 10) return null
     const currentYear = new Date().getFullYear()
     const age = currentYear - year
-    return age >= 0 ? `${age}Y OLD` : null
+    return age >= 0 ? `${age} yrs old` : `Built ${year}`
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="space-y-8 p-1">
+      <Card className={cardClassName}>
         <CardHeader>
-          <CardTitle>Ideal Property Criteria</CardTitle>
+          <CardTitle className="text-xl flex items-center gap-2">
+            <InfoIcon className="h-5 w-5" style={{ color: primaryColor }} />
+            Ideal Property Criteria
+          </CardTitle>
           <CardDescription>
-            Prepared for {clientName || "Client"} on {new Date(preparedDate).toLocaleDateString()}
+            Summary for {clientName || "Client"}, prepared on {formatDate(preparedDate)}.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div>
-            <p className="font-semibold">Price Range</p>
-            <p className="text-muted-foreground">
-              {formatCurrency(buyerCriteria.priceRange.min) || "?"} -{" "}
-              {formatCurrency(buyerCriteria.priceRange.max) || "?"}
-            </p>
-          </div>
-          <div>
-            <p className="font-semibold">Beds</p>
-            <p className="text-muted-foreground">{formatNumber(buyerCriteria.beds) || "Any"}</p>
-          </div>
-          <div>
-            <p className="font-semibold">Baths</p>
-            <p className="text-muted-foreground">{formatNumber(buyerCriteria.baths) || "Any"}</p>
-          </div>
-          <div>
-            <p className="font-semibold">Square Feet</p>
-            <p className="text-muted-foreground">{formatNumber(buyerCriteria.sqft) || "Any"}</p>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+            <div>
+              <Label className="text-xs text-muted-foreground">Price Range</Label>
+              <p className="font-semibold text-base">
+                {formatCurrency(buyerCriteria.priceRange.min, false) || "Any"} -{" "}
+                {formatCurrency(buyerCriteria.priceRange.max, false) || "Any"}
+              </p>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Min. Beds</Label>
+              <p className="font-semibold text-base">{formatNumber(buyerCriteria.beds) || "Any"}</p>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Min. Baths</Label>
+              <p className="font-semibold text-base">{formatNumber(buyerCriteria.baths) || "Any"}</p>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Min. SqFt</Label>
+              <p className="font-semibold text-base">{formatNumber(buyerCriteria.sqft) || "Any"}</p>
+            </div>
           </div>
           {buyerCriteria.mustHaveFeatures && (
-            <div className="col-span-full">
-              <p className="font-semibold">Must-Have Features</p>
-              <p className="text-muted-foreground">{buyerCriteria.mustHaveFeatures}</p>
+            <div className="pt-2">
+              <Label className="text-xs text-muted-foreground">Must-Have Features</Label>
+              <p className="text-sm text-foreground whitespace-pre-line bg-muted/50 p-3 rounded-md">
+                {buyerCriteria.mustHaveFeatures}
+              </p>
             </div>
           )}
         </CardContent>
       </Card>
 
       <div>
-        <h2 className="text-2xl font-bold mb-4">Listings for Consideration</h2>
+        <h2 className="text-2xl font-semibold mb-6 text-foreground">Listings for Consideration</h2>
         {listings.filter((l) => l.address || l.listingUrl).length > 0 ? (
-          <div
-            className="
-              flex flex-row gap-6 overflow-x-auto pb-2
-              [&::-webkit-scrollbar]:h-2
-              [&::-webkit-scrollbar-track]:bg-transparent
-              [&::-webkit-scrollbar-thumb]:bg-muted-foreground/40
-              scrollbar-thumb-rounded
-            "
-          >
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {listings
               .filter((l) => l.address || l.listingUrl)
-              .map((listing: ListingProperty) => {
+              .map((listing: ListingProperty, index) => {
                 const meetsPrice = checkCriteria(
                   listing.askingPrice,
                   buyerCriteria.priceRange.min,
                   buyerCriteria.priceRange.max,
                 )
-                // For single value criteria, we treat it as a minimum requirement.
-                // So, we pass the criteria value as 'min' and an empty string or undefined as 'max'.
                 const meetsBeds = checkCriteria(listing.beds, buyerCriteria.beds)
                 const meetsBaths = checkCriteria(listing.baths, buyerCriteria.baths)
                 const meetsSqft = checkCriteria(listing.sqft, buyerCriteria.sqft)
-
                 const propertyAge = calculateAge(listing.yearBuilt)
 
-                let streetViewImageUrl = null
                 let clickableStreetViewUrl = null
-
                 if (googleMapsApiKey) {
-                  const locationParam =
-                    listing.lat && listing.lng
-                      ? `${listing.lat},${listing.lng}`
-                      : listing.address
-                        ? encodeURIComponent(listing.address)
-                        : null
-
-                  if (locationParam) {
-                    streetViewImageUrl = `https://maps.googleapis.com/maps/api/streetview?size=400x250&location=${locationParam}&key=${googleMapsApiKey}&fov=90&heading=235&pitch=10`
-                  }
-
                   if (listing.lat && listing.lng) {
                     clickableStreetViewUrl = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${listing.lat},${listing.lng}`
                   } else if (listing.address) {
-                    clickableStreetViewUrl = `https://www.google.com/maps/@?api=1&map_action=pano&query=${encodeURIComponent(
-                      listing.address,
-                    )}`
+                    clickableStreetViewUrl = `https://www.google.com/maps/@?api=1&map_action=pano&query=${encodeURIComponent(listing.address)}`
                   }
                 }
 
                 return (
-                  <div key={listing.id} className="shrink-0 w-[360px]">
-                    <a
-                      href={listing.listingUrl || "#"}
-                      target={listing.listingUrl ? "_blank" : "_self"}
-                      rel="noopener noreferrer"
-                      className="block group"
-                    >
-                      <Card className="overflow-hidden h-full flex flex-col transition-all duration-200 group-hover:shadow-lg rounded-lg">
-                        <div className="relative aspect-[16/10] overflow-hidden bg-muted">
-                          <img
-                            src={
-                              listing.imageUrl ||
-                              "/placeholder.svg?width=400&height=250&query=beautiful+house+exterior" ||
-                              "/placeholder.svg" ||
-                              "/placeholder.svg"
-                            }
-                            alt={`Property at ${listing.address || "Unknown Address"}`}
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                            width={400}
-                            height={250}
-                          />
-                          <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                            1 OF 5 {/* Placeholder */}
-                          </div>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            className="absolute top-2 right-2 text-xs"
-                            onClick={(e) => {
-                              e.preventDefault()
-                              alert("3D Tour clicked (placeholder)")
-                            }}
-                          >
-                            3D TOUR
-                          </Button>
+                  <Card
+                    key={listing.id}
+                    className={`overflow-hidden flex flex-col group shadow-lg hover:shadow-xl transition-all duration-300 ${cardClassName}`}
+                  >
+                    <div className="relative aspect-[16/10] bg-muted overflow-hidden">
+                      {listing.imageUrl ? (
+                        <img
+                          src={listing.imageUrl || "/placeholder.svg"}
+                          alt={`Property at ${listing.address || "Unknown Address"}`}
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          width={400}
+                          height={225}
+                        />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
+                          <BuildingIcon className="w-20 h-20 text-slate-400 dark:text-slate-600 opacity-70" />
                         </div>
+                      )}
+                      <Badge
+                        variant="secondary"
+                        className="absolute top-3 left-3 text-xs py-1 px-2.5"
+                        style={{ backgroundColor: primaryColor, color: textColorForPrimary }}
+                      >
+                        Listing #{index + 1}
+                      </Badge>
+                    </div>
 
-                        <div className="p-3 flex-grow flex flex-col">
-                          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                            <span className="uppercase font-medium">
-                              {listing.propertyType || "PROPERTY"}
-                              {propertyAge && ` • ${propertyAge}`}
-                            </span>
-                            <Badge
-                              variant="outline"
-                              className="text-green-600 border-green-600 px-1.5 py-0.5 text-[10px]"
-                            >
-                              OPEN {/* Placeholder */}
-                            </Badge>
-                          </div>
-
-                          <h3
-                            className="text-lg font-semibold text-foreground leading-tight mb-0.5 truncate"
-                            title={listing.address}
-                          >
-                            {listing.address || "Address Not Available"}
-                          </h3>
-
-                          <p className="text-2xl font-bold text-foreground flex items-center mb-2">
-                            {formatCurrency(listing.askingPrice) || "Price N/A"}
-                            <ComparisonIcon meets={meetsPrice} className="h-4 w-4 ml-1" />
-                          </p>
-
-                          <div className="grid grid-cols-4 gap-1 py-2 border-t border-b">
-                            <StatPill icon={<BedDoubleIcon />} value={listing.beds} label="Beds" meets={meetsBeds} />
-                            <StatPill icon={<BathIcon />} value={listing.baths} label="Baths" meets={meetsBaths} />
-                            <StatPill icon={<SquareIcon />} value={listing.sqft} label="SqFt" meets={meetsSqft} />
-                            <StatPill icon={<CarIcon />} value={listing.garageSpaces} label="Garage" meets={null} />
-                          </div>
-
-                          <div className="mt-2 pt-2 text-xs space-y-1 text-muted-foreground">
-                            {listing.lotSize && (
-                              <div className="flex items-center">
-                                <LandPlotIcon className="h-3.5 w-3.5 mr-1.5" />
-                                <span className="font-medium">Lot Size:</span>
-                                <span className="ml-1 font-semibold text-foreground">{listing.lotSize}</span>
-                              </div>
-                            )}
-                            {listing.levels && (
-                              <div className="flex items-center">
-                                <LayersIcon className="h-3.5 w-3.5 mr-1.5" />
-                                <span className="font-medium">Levels:</span>
-                                <span className="ml-1 font-semibold text-foreground">{listing.levels}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </Card>
-                    </a>
-                    {streetViewImageUrl && clickableStreetViewUrl && (
-                      <Button asChild variant="secondary" className="w-full mt-2 text-xs sm:text-sm">
-                        <a
-                          href={clickableStreetViewUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center space-x-2"
+                    <CardContent className="p-4 flex-grow flex flex-col">
+                      <div className="mb-3">
+                        <h3
+                          className="text-xl font-semibold leading-tight truncate text-foreground"
+                          title={listing.address}
                         >
-                          <MapPin className="w-5 h-5 sm:w-6 sm:h-6" />
-                          <span>Street View</span>
-                        </a>
-                      </Button>
-                    )}
-                  </div>
+                          {listing.address || "Address Not Available"}
+                        </h3>
+                        <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-1">
+                          {listing.propertyType && (
+                            <div className="flex items-center gap-1">
+                              <TagIcon size={12} /> <span>{listing.propertyType}</span>
+                            </div>
+                          )}
+                          {propertyAge && (
+                            <>
+                              {listing.propertyType && <span className="opacity-50">•</span>}
+                              <div className="flex items-center gap-1">
+                                <CalendarDaysIcon size={12} /> <span>{propertyAge}</span>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      <p className="text-3xl font-bold flex items-center my-3 text-foreground">
+                        {formatCurrency(listing.askingPrice) || "Price N/A"}
+                        <ComparisonIcon meets={meetsPrice} className="h-5 w-5" />
+                      </p>
+
+                      <div className="flex gap-2.5 my-4">
+                        <StatPill
+                          icon={<BedDoubleIcon />}
+                          value={listing.beds}
+                          label="Beds"
+                          meets={meetsBeds}
+                          primaryColor={primaryColor}
+                        />
+                        <StatPill
+                          icon={<BathIcon />}
+                          value={listing.baths}
+                          label="Baths"
+                          meets={meetsBaths}
+                          primaryColor={primaryColor}
+                        />
+                        <StatPill
+                          icon={<SquareIcon />}
+                          value={listing.sqft}
+                          label="SqFt"
+                          meets={meetsSqft}
+                          formatter={(val) => formatNumber(String(val), false)}
+                          primaryColor={primaryColor}
+                        />
+                      </div>
+
+                      <div className="text-xs space-y-1.5 text-muted-foreground mt-auto pt-3 border-t">
+                        {listing.garageSpaces && (
+                          <div className="flex items-center gap-1.5">
+                            <CarIcon size={14} className="text-primary/70" />
+                            <span>Garage: {listing.garageSpaces} spaces</span>
+                          </div>
+                        )}
+                        {listing.lotSize && (
+                          <div className="flex items-center gap-1.5">
+                            <LandPlotIcon size={14} className="text-primary/70" />
+                            <span>Lot Size: {listing.lotSize}</span>
+                          </div>
+                        )}
+                        {listing.levels && (
+                          <div className="flex items-center gap-1.5">
+                            <LayersIcon size={14} className="text-primary/70" />
+                            <span>Levels: {listing.levels}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {clickableStreetViewUrl && (
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="sm"
+                          className="w-full mt-4 border-primary/30 text-primary hover:bg-primary/5 hover:text-primary"
+                          style={{ borderColor: primaryColor ? `${primaryColor}66` : undefined, color: primaryColor }}
+                        >
+                          <a
+                            href={clickableStreetViewUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center"
+                          >
+                            <MapPin className="w-4 h-4 mr-2" /> Street View
+                          </a>
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
                 )
               })}
           </div>
         ) : (
-          <p className="text-center text-muted-foreground py-8">
-            No listings have been fetched yet. Add a URL to see properties here.
-          </p>
+          <Card className={`py-16 ${cardClassName}`}>
+            <CardContent className="text-center text-muted-foreground">
+              <BuildingIcon className="w-16 h-16 mx-auto mb-4 text-slate-400 dark:text-slate-500" />
+              <p className="text-lg font-medium mb-1">No Listings Added Yet</p>
+              <p className="text-sm">
+                Please use "Step 2: Add & Manage Listings" in the left panel to include properties for comparison.
+              </p>
+            </CardContent>
+          </Card>
         )}
       </div>
 
       {data.realtorNotes && (
-        <Card>
+        <Card className={cardClassName}>
           <CardHeader>
-            <CardTitle>Realtor's Instructions & Recommendations</CardTitle>
+            <CardTitle className="text-xl flex items-center gap-2">
+              <MessageSquareIcon className="h-5 w-5" style={{ color: primaryColor }} />
+              Realtor's Notes & Recommendations
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="whitespace-pre-wrap text-sm text-foreground">{data.realtorNotes}</p>
+            <p className="whitespace-pre-wrap text-sm text-foreground bg-muted/50 p-4 rounded-md">
+              {data.realtorNotes}
+            </p>
           </CardContent>
         </Card>
       )}

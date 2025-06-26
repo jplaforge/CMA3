@@ -8,9 +8,9 @@ export interface PointOfInterest {
 
 export interface BuyerCriteria {
   priceRange: { min: string; max: string }
-  beds: string // Changed from { min: string; max: string }
-  baths: string // Changed from { min: string; max: string }
-  sqft: string // Changed from { min: string; max: string }
+  beds: string
+  baths: string
+  sqft: string
   mustHaveFeatures: string
   pointsOfInterest: PointOfInterest[]
 }
@@ -37,6 +37,10 @@ export interface ListingProperty {
 export interface BuyerReportState {
   clientName: string
   preparedDate: string
+  preparedBy: string
+  realtorAgency: string
+  primaryColor?: string
+  secondaryColor?: string
   buyerCriteria: BuyerCriteria
   listings: ListingProperty[]
   realtorNotes: string
@@ -72,11 +76,13 @@ export const createEmptyPOI = (): PointOfInterest => ({
 export const initialBuyerReportState: BuyerReportState = {
   clientName: "",
   preparedDate: new Date().toLocaleDateString("en-CA"),
+  preparedBy: "",
+  realtorAgency: "",
   buyerCriteria: {
     priceRange: { min: "", max: "" },
-    beds: "", // Changed
-    baths: "", // Changed
-    sqft: "", // Changed
+    beds: "",
+    baths: "",
+    sqft: "",
     mustHaveFeatures: "",
     pointsOfInterest: [],
   },
