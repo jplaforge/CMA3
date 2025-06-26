@@ -90,7 +90,7 @@ export const initialBuyerReportState: BuyerReportState = {
     baths: "",
     sqft: "",
     mustHaveFeatures: "",
-    pointsOfInterest: [],
+    pointsOfInterest: [createEmptyPOI()],
   },
   listings: [createEmptyListing()],
   realtorNotes: "",

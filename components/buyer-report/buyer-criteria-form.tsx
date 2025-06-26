@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { type BuyerReportState, createEmptyPOI } from "@/lib/buyer-report-types"
+import PlaceAutocompleteInput from "./place-autocomplete-input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -12,9 +13,10 @@ import { Trash2, PlusCircleIcon } from "lucide-react"
 interface BuyerCriteriaFormProps {
   data: BuyerReportState
   setData: React.Dispatch<React.SetStateAction<BuyerReportState>>
+  googleMapsApiKey?: string
 }
 
-export default function BuyerCriteriaForm({ data, setData }: BuyerCriteriaFormProps) {
+export default function BuyerCriteriaForm({ data, setData, googleMapsApiKey }: BuyerCriteriaFormProps) {
   const handleNestedCriteriaChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, field: string) => {
     const { name, value } = e.target
     setData((prev) => ({
@@ -34,17 +36,44 @@ export default function BuyerCriteriaForm({ data, setData }: BuyerCriteriaFormPr
     }))
   }
 
+  const ensureEmptyPoiSlot = (current: typeof data.buyerCriteria.pointsOfInterest) => {
+    const hasEmpty = current.some((p) => !p.name && !p.address)
+    return hasEmpty ? current : [...current, createEmptyPOI()]
+  }
+
+  const geocodePoi = async (address: string, id: string) => {
+    if (!address) return
+    try {
+      const res = await fetch("/api/geocode-address", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address }),
+      })
+      if (res.ok) {
+        const { lat, lng } = await res.json()
+        setData((prev) => {
+          const updated = prev.buyerCriteria.pointsOfInterest.map((p) =>
+            p.id === id ? { ...p, lat, lng, address } : p,
+          )
+          return { ...prev, buyerCriteria: { ...prev.buyerCriteria, pointsOfInterest: ensureEmptyPoiSlot(updated) } }
+        })
+      }
+    } catch (e) {
+      console.error("Geocoding POI failed", e)
+    }
+  }
+
   const handlePoiChange = (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
     const { name, value } = e.target
-    setData((prev) => ({
-      ...prev,
-      buyerCriteria: {
-        ...prev.buyerCriteria,
-        pointsOfInterest: prev.buyerCriteria.pointsOfInterest.map((poi) =>
-          poi.id === id ? { ...poi, [name]: name === "lat" || name === "lng" ? Number(value) : value } : poi,
-        ),
-      },
-    }))
+    setData((prev) => {
+      const updated = prev.buyerCriteria.pointsOfInterest.map((poi) =>
+        poi.id === id ? { ...poi, [name]: name === "lat" || name === "lng" ? Number(value) : value } : poi,
+      )
+      return {
+        ...prev,
+        buyerCriteria: { ...prev.buyerCriteria, pointsOfInterest: ensureEmptyPoiSlot(updated) },
+      }
+    })
   }
 
   const addPoi = () => {
@@ -58,13 +87,12 @@ export default function BuyerCriteriaForm({ data, setData }: BuyerCriteriaFormPr
   }
 
   const removePoi = (id: string) => {
-    setData((prev) => ({
-      ...prev,
-      buyerCriteria: {
-        ...prev.buyerCriteria,
-        pointsOfInterest: prev.buyerCriteria.pointsOfInterest.filter((poi) => poi.id !== id),
-      },
-    }))
+    setData((prev) => {
+      let remaining = prev.buyerCriteria.pointsOfInterest.filter((poi) => poi.id !== id)
+      if (remaining.length === 0) remaining = [createEmptyPOI()]
+      else remaining = ensureEmptyPoiSlot(remaining)
+      return { ...prev, buyerCriteria: { ...prev.buyerCriteria, pointsOfInterest: remaining } }
+    })
   }
 
   const cardClassName = data.secondaryColor ? "bg-card/70 backdrop-blur-sm" : "bg-card"
@@ -171,11 +199,13 @@ export default function BuyerCriteriaForm({ data, setData }: BuyerCriteriaFormPr
                 value={poi.name}
                 onChange={(e) => handlePoiChange(e, poi.id)}
               />
-              <Input
-                name="address"
-                placeholder="Address"
+              <PlaceAutocompleteInput
                 value={poi.address}
-                onChange={(e) => handlePoiChange(e, poi.id)}
+                onChange={(val) => handlePoiChange({ target: { name: "address", value: val } } as any, poi.id)}
+                onSelect={(addr) => geocodePoi(addr, poi.id)}
+                onBlur={(val) => geocodePoi(val, poi.id)}
+                placeholder="Address"
+                apiKey={googleMapsApiKey}
               />
               <div className="grid grid-cols-2 gap-3">
                 <Input
