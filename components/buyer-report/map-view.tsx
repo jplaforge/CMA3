@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, useCallback, useMemo } from "react"
-import { GoogleMap, LoadScript, Marker, InfoWindow } from "@react-google-maps/api"
+import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from "@react-google-maps/api"
 import type { BuyerReportState, ListingProperty, PointOfInterest } from "@/lib/buyer-report-types"
 
 const mapContainerStyle = {
@@ -42,6 +42,7 @@ interface MapViewProps {
 type SelectedItem = (ListingProperty & { type: "listing" }) | (PointOfInterest & { type: "poi" }) | null
 
 export default function MapView({ data, apiKey }: MapViewProps) {
+  const { isLoaded } = useJsApiLoader({ googleMapsApiKey: apiKey || "", libraries })
   const [map, setMap] = useState<any>(null) // google.maps.Map
   const [selectedItem, setSelectedItem] = useState<SelectedItem>(null)
 
@@ -98,19 +99,26 @@ export default function MapView({ data, apiKey }: MapViewProps) {
     )
   }
 
+  if (!isLoaded) {
+    return (
+      <div className="flex justify-center items-center h-[600px] w-full rounded-lg bg-muted">
+        <p>Loading map...</p>
+      </div>
+    )
+  }
+
   return (
-    <LoadScript googleMapsApiKey={apiKey} libraries={libraries}>
-      <GoogleMap
-        mapContainerStyle={mapContainerStyle}
-        center={defaultCenter}
-        zoom={10}
-        onLoad={onMapLoad}
-        options={{
-          disableDefaultUI: true,
-          zoomControl: true,
-          fullscreenControl: true,
-        }}
-      >
+    <GoogleMap
+      mapContainerStyle={mapContainerStyle}
+      center={defaultCenter}
+      zoom={10}
+      onLoad={onMapLoad}
+      options={{
+        disableDefaultUI: true,
+        zoomControl: true,
+        fullscreenControl: true,
+      }}
+    >
         {validListings.map((listing, index) => (
           <Marker
             key={`listing-${listing.id}`}
@@ -158,6 +166,5 @@ export default function MapView({ data, apiKey }: MapViewProps) {
           </InfoWindow>
         )}
       </GoogleMap>
-    </LoadScript>
   )
 }
