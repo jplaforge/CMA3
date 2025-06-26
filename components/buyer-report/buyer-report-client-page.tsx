@@ -99,22 +99,30 @@ export default function BuyerReportClientPage({ googleMapsApiKey }: BuyerReportC
   const cardClassName = reportData.secondaryColor ? "bg-card/80 backdrop-blur-sm" : "bg-card"
 
   return (
-    <div className="flex flex-col h-screen p-4 sm:p-6 md:p-8">
-      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 shrink-0">
-        <div className="flex items-center gap-3">
-          <HomeIcon className="h-10 w-10" style={{ color: "var(--primary)" }} />
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Buyer Tour & Analysis Tool</h1>
-            <p className="text-muted-foreground">
-              Streamline your client's property search and decision-making process.
-            </p>
+    <div
+      className="flex flex-col min-h-screen font-sans text-[#1E404B] p-4 sm:p-6 md:p-8"
+      style={{
+        background: "linear-gradient(to bottom, #F1F8FD, #EFF7FC)",
+        "--primary": "#1E404B",
+      } as React.CSSProperties}
+    >
+      <header className="sticky top-0 z-50 w-full border-b border-[#1E404B] bg-[#1E404B] mb-6 shrink-0">
+        <div className="container mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-white">
+          <div className="flex items-center gap-3">
+            <HomeIcon className="h-10 w-10" />
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Buyer Tour & Analysis Tool</h1>
+              <p className="text-sm">
+                Streamline your client's property search and decision-making process.
+              </p>
+            </div>
           </div>
+          <Button asChild className="shrink-0" style={{ backgroundColor: "#64CC7D", color: "#1E404B" }}>
+            <Link href="/home">
+              <ArrowLeftIcon className="mr-2 h-4 w-4" /> Back to Home
+            </Link>
+          </Button>
         </div>
-        <Button asChild variant="outline" className="shrink-0">
-          <Link href="/home">
-            <ArrowLeftIcon className="mr-2 h-4 w-4" /> Back to Home
-          </Link>
-        </Button>
       </header>
 
       <ResizablePanelGroup direction="horizontal" className="flex-grow rounded-lg border overflow-hidden">
