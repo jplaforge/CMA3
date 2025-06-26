@@ -4,6 +4,7 @@ import { generateObject } from "ai"
 import { z } from "zod"
 import * as cheerio from "cheerio"
 import { createAdminClient } from "@/lib/supabase/admin" // <-- use new helper
+import { parseCssColor } from "@/lib/utils"
 
 // Define the expected structure of the extracted data
 const RealtorProfileSchema = z.object({
@@ -96,6 +97,30 @@ export async function POST(req: NextRequest) {
       If a piece of information is not clearly available, omit it or leave the field empty. Do not guess.`,
     })
 
+    // Normalize colors returned by the LLM. Use parseCssColor to check if the
+    // value is already a valid CSS color string. If not, map a few common
+    // descriptive names to standard CSS colors before saving.
+    const colorMap: Record<string, string> = {
+      "deep blue": "#00008b",
+      "dark blue": "#00008b",
+      "bright blue": "#00f",
+      "light blue": "#add8e6",
+      "dark green": "darkgreen",
+      "light green": "lightgreen",
+      "deep red": "darkred",
+      "bright orange": "orange",
+    }
+
+    const normalizeColor = (color?: string): string | undefined => {
+      if (!color) return undefined
+      const trimmed = color.trim().toLowerCase()
+      if (parseCssColor(trimmed)) return color
+      return colorMap[trimmed] ?? color
+    }
+
+    const normalizedPrimary = normalizeColor(extractedProfile.primaryColor)
+    const normalizedSecondary = normalizeColor(extractedProfile.secondaryColor)
+
     // 4. Save to Supabase
     // Optional: Check if a user is authenticated if your table uses user_id
     // const { data: { user } } = await supabase.auth.getUser();
@@ -111,8 +136,8 @@ export async function POST(req: NextRequest) {
           realtor_url: validatedUrl,
           realtor_name: extractedProfile.realtorName,
           agency_name: extractedProfile.agencyName,
-          primary_color: extractedProfile.primaryColor,
-          secondary_color: extractedProfile.secondaryColor,
+          primary_color: normalizedPrimary,
+          secondary_color: normalizedSecondary,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "realtor_url" },

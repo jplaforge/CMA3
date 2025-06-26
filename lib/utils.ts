@@ -58,7 +58,7 @@ export function getContrastingTextColor(color?: string): string {
   return hsp > 127.5 ? "#000000" : "#FFFFFF" // Threshold can be adjusted
 }
 
-function parseCssColor(color?: string): [number, number, number] | null {
+export function parseCssColor(color?: string): [number, number, number] | null {
   if (!color) return null
 
   let hex = color.replace(/^#/, "")
