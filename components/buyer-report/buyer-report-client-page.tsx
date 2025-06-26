@@ -94,7 +94,7 @@ export default function BuyerReportClientPage({ googleMapsApiKey }: BuyerReportC
 
   const inactiveTabStyle = reportData.secondaryColor ? { color: textColorForSecondary } : {}
 
-  const generateReportButtonStyle = { backgroundColor: "var(--primary)", color: textColorForPrimary }
+  const generateReportButtonStyle = { backgroundColor: "#64CC7D", color: "#1E404B" }
 
   const cardClassName = reportData.secondaryColor ? "bg-card/80 backdrop-blur-sm" : "bg-card"
 
@@ -265,7 +265,7 @@ export default function BuyerReportClientPage({ googleMapsApiKey }: BuyerReportC
               >
                 <Link href="/cma-report">
                   <FileTextIcon className="mr-2 h-5 w-5" />
-                  Generate CMA Report
+                  Generate Report
                 </Link>
               </Button>
             </div>

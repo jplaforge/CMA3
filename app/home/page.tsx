@@ -86,8 +86,11 @@ export default function HomePage() {
   const canProceed = !!analysisResult && !isLoading && !error
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-gray-200 font-sans">
-      <header className="sticky top-0 z-50 w-full border-b border-gray-800 bg-black/80 backdrop-blur-lg">
+    <div
+      className="flex flex-col min-h-screen font-sans text-[#1E404B]"
+      style={{ background: "linear-gradient(to bottom, #F1F8FD, #EFF7FC)" }}
+    >
+      <header className="sticky top-0 z-50 w-full border-b border-[#1E404B] bg-white/80 backdrop-blur-lg">
         <div className="container mx-auto flex h-20 items-center justify-center py-4 px-4 md:px-6">
           <Link href="/home" className="flex items-center" prefetch={false}>
             <Image
@@ -105,20 +108,20 @@ export default function HomePage() {
         {/* Hero Section */}
         <section className="relative py-16 md:py-24 lg:py-32 overflow-hidden">
           <div aria-hidden="true" className="absolute inset-0 -z-10">
-            <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900/30 to-sky-900/20"></div>
+            <div className="absolute inset-0 bg-gradient-to-b from-[#F1F8FD] to-[#EFF7FC]"></div>
           </div>
           <div className="container mx-auto px-4 md:px-6 text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter text-white mb-6 leading-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter mb-6 leading-tight">
               Unlock Powerful Real Estate Insights
             </h1>
-            <p className="max-w-3xl mx-auto text-md md:text-lg text-gray-400 mb-10">
+            <p className="max-w-3xl mx-auto text-md md:text-lg mb-10">
               Our suite provides comprehensive tools for Comparative Market Analysis (CMA) and detailed Buyer Reports,
               empowering you to make data-driven decisions with clarity and precision.
             </p>
 
             {/* Realtor URL Input Section */}
             <div className="mb-10 max-w-xl mx-auto">
-              <p className="text-gray-400 mb-3 text-sm">
+              <p className="mb-3 text-sm">
                 Personalize your reports by adding your official realtor website. We&apos;ll try to extract key branding
                 info.
               </p>
@@ -130,7 +133,7 @@ export default function HomePage() {
                     value={realtorUrl}
                     onChange={(e) => setRealtorUrl(e.target.value)}
                     placeholder="e.g., https://www.yourrealtysite.com"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-md bg-gray-800/70 border-gray-700 text-gray-200 focus:ring-sky-500 focus:border-sky-500 placeholder-gray-500"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-md bg-white border-[#1E404B] text-[#1E404B] focus:ring-[#64CC7D] focus:border-[#64CC7D] placeholder-gray-500"
                     aria-label="Realtor official URL"
                     disabled={isLoading}
                   />
@@ -139,6 +142,7 @@ export default function HomePage() {
                   onClick={handleAnalyzeAndSaveUrl}
                   type="button"
                   disabled={isLoading}
+                  style={{ backgroundColor: "#64CC7D", color: "#1E404B" }}
                 >
                   {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   Analyze & Save
@@ -151,7 +155,7 @@ export default function HomePage() {
                 </p>
               )}
               {analysisResult && !error && (
-                <div className="mt-4 p-4 bg-gray-800/50 border border-gray-700 rounded-md text-left text-xs">
+                <div className="mt-4 p-4 bg-white/50 border border-[#1E404B] rounded-md text-left text-xs">
                   <p className="text-green-400 font-semibold mb-2 flex items-center">
                     <CheckCircle className="mr-1 h-4 w-4" />
                     Profile Analysis Complete & Saved:
@@ -210,7 +214,7 @@ export default function HomePage() {
             {/* Proceed Buttons Section */}
             {canProceed && (
               <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
-                <Button asChild className="w-full sm:w-auto">
+                <Button asChild className="w-full sm:w-auto" style={{ backgroundColor: "#64CC7D", color: "#1E404B" }}>
                   <Link href="/buyer-report" className="flex items-center">
                     For my Buyer
                     <UsersIcon className="ml-2 h-5 w-5" />
@@ -219,6 +223,7 @@ export default function HomePage() {
                 <Button
                   asChild
                   className="w-full sm:w-auto"
+                  style={{ backgroundColor: "#64CC7D", color: "#1E404B" }}
                 >
                   <Link href="/cma-report" className="flex items-center">
                     For my Seller
@@ -231,10 +236,10 @@ export default function HomePage() {
         </section>
 
         {/* Key Features Section */}
-        <section className="py-16 md:py-24 bg-gray-900/70">
+        <section className="py-16 md:py-24 bg-white">
           <div className="container mx-auto px-4 md:px-6">
-            <h2 className="text-4xl font-bold text-center text-white mb-16 tracking-tight">
-              Why Choose <span className="text-sky-400">WelcomeSpaces</span>?
+            <h2 className="text-4xl font-bold text-center mb-16 tracking-tight">
+              Why Choose <span className="text-[#64CC7D]">WelcomeSpaces</span>?
             </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[
@@ -261,20 +266,20 @@ export default function HomePage() {
               ].map((feature) => (
                 <Card
                   key={feature.title}
-                  className="bg-gray-800/80 border-gray-700/60 shadow-xl hover:shadow-sky-700/30 transition-all duration-300 ease-in-out transform hover:-translate-y-1 rounded-xl overflow-hidden group"
+                  className="bg-white border-[#1E404B] shadow-xl hover:shadow-lg transition-all duration-300 ease-in-out transform hover:-translate-y-1 rounded-xl overflow-hidden group"
                 >
                   <CardContent className="p-8 flex flex-col items-center text-center">
                     {feature.icon}
-                    <CardTitle className="text-2xl font-semibold text-gray-100 mb-3 group-hover:text-sky-400 transition-colors">
+                    <CardTitle className="text-2xl font-semibold mb-3 group-hover:text-[#64CC7D] transition-colors">
                       {feature.title}
                     </CardTitle>
-                    <CardDescription className="text-gray-400 mb-6 text-sm leading-relaxed">
+                    <CardDescription className="mb-6 text-sm leading-relaxed">
                       {feature.description}
                     </CardDescription>
                     <Button
                       variant="link"
                       asChild
-                      className="text-sky-400 group-hover:text-sky-300 transition-colors mt-auto"
+                      className="text-[#64CC7D] group-hover:text-[#64CC7D]/80 transition-colors mt-auto"
                     >
                       <Link href={feature.link}>
                         Learn More <ArrowRightIcon className="ml-2 h-4 w-4" />
@@ -288,7 +293,7 @@ export default function HomePage() {
         </section>
       </main>
 
-      <footer className="py-10 text-center text-gray-500 border-t border-gray-800 bg-black">
+      <footer className="py-10 text-center text-[#1E404B] border-t border-[#1E404B] bg-white">
         <p>&copy; {new Date().getFullYear()} WelcomeSpaces. All rights reserved.</p>
         <p className="text-xs mt-1">Empowering Real Estate Professionals</p>
       </footer>
