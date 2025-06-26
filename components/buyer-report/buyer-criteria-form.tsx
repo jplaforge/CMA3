@@ -36,8 +36,10 @@ export default function BuyerCriteriaForm({ data, setData, googleMapsApiKey }: B
     }))
   }
 
-  const ensureEmptyPoiSlot = (current: typeof data.buyerCriteria.pointsOfInterest) => {
-    const hasEmpty = current.some((p) => !p.name && !p.address)
+  const ensureEmptyPoiSlot = (
+    current: typeof data.buyerCriteria.pointsOfInterest,
+  ) => {
+    const hasEmpty = current.some((p) => !p.address)
     return hasEmpty ? current : [...current, createEmptyPOI()]
   }
 
@@ -53,9 +55,15 @@ export default function BuyerCriteriaForm({ data, setData, googleMapsApiKey }: B
         const { lat, lng } = await res.json()
         setData((prev) => {
           const updated = prev.buyerCriteria.pointsOfInterest.map((p) =>
-            p.id === id ? { ...p, lat, lng, address } : p,
+            p.id === id ? { ...p, lat, lng, address, name: p.name || address } : p,
           )
-          return { ...prev, buyerCriteria: { ...prev.buyerCriteria, pointsOfInterest: ensureEmptyPoiSlot(updated) } }
+          return {
+            ...prev,
+            buyerCriteria: {
+              ...prev.buyerCriteria,
+              pointsOfInterest: ensureEmptyPoiSlot(updated),
+            },
+          }
         })
       }
     } catch (e) {
@@ -193,38 +201,19 @@ export default function BuyerCriteriaForm({ data, setData, googleMapsApiKey }: B
                   <span className="sr-only">Remove POI</span>
                 </Button>
               </div>
-              <Input
-                name="name"
-                placeholder="Name (e.g., Work Office, Kid's School)"
-                value={poi.name}
-                onChange={(e) => handlePoiChange(e, poi.id)}
-              />
               <PlaceAutocompleteInput
                 value={poi.address}
-                onChange={(val) => handlePoiChange({ target: { name: "address", value: val } } as any, poi.id)}
+                onChange={(val) =>
+                  handlePoiChange({ target: { name: "address", value: val } } as any, poi.id)
+                }
                 onSelect={(addr) => geocodePoi(addr, poi.id)}
                 onBlur={(val) => geocodePoi(val, poi.id)}
-                placeholder="Address"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") geocodePoi(poi.address, poi.id)
+                }}
+                placeholder="Address or place name"
                 apiKey={googleMapsApiKey}
               />
-              <div className="grid grid-cols-2 gap-3">
-                <Input
-                  name="lat"
-                  placeholder="Latitude (Optional)"
-                  value={poi.lat ?? ""}
-                  onChange={(e) => handlePoiChange(e, poi.id)}
-                  type="number"
-                  step="any"
-                />
-                <Input
-                  name="lng"
-                  placeholder="Longitude (Optional)"
-                  value={poi.lng ?? ""}
-                  onChange={(e) => handlePoiChange(e, poi.id)}
-                  type="number"
-                  step="any"
-                />
-              </div>
             </div>
           ))}
         </CardContent>
