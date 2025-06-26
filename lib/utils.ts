@@ -69,7 +69,7 @@ export function normalizeColorToHex(color?: string): string | null {
     .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`
 }
 
-function parseCssColor(color?: string): [number, number, number] | null {
+export function parseCssColor(color?: string): [number, number, number] | null {
   if (!color) return null
 
   let hex = color.replace(/^#/, "")
