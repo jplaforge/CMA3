@@ -258,7 +258,7 @@ export default function CmaToolRoutePage() {
         <Card className={cn("print:hidden", cardClassName)}>
           <CardFooter className="flex justify-center p-6">
             <Button asChild variant="outline" style={primaryColorStyle}>
-              <Link href="/buyer-report">
+              <Link href="/cma-ai-gen">
                 <Edit3Icon className="mr-2 h-4 w-4" /> Edit Buyer Report
               </Link>
             </Button>
