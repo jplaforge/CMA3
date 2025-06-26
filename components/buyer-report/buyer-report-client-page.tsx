@@ -136,7 +136,7 @@ export default function BuyerReportClientPage({ googleMapsApiKey }: BuyerReportC
               <CardHeader>
                 <CardTitle className="text-xl flex items-center gap-2">
                   <ClipboardListIcon className="h-5 w-5" style={{ color: "var(--primary)" }} />
-                  Report Details
+                  Report Details (Buyer)
                 </CardTitle>
               </CardHeader>
               <CardContent>
