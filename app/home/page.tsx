@@ -138,7 +138,6 @@ export default function HomePage() {
                 <Button
                   onClick={handleAnalyzeAndSaveUrl}
                   type="button"
-                  className="bg-sky-700 hover:bg-sky-600 text-gray-100 px-6 py-2.5 rounded-md text-sm font-medium transition-colors flex items-center"
                   disabled={isLoading}
                 >
                   {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
@@ -211,10 +210,7 @@ export default function HomePage() {
             {/* Proceed Buttons Section */}
             {canProceed && (
               <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
-                <Button
-                  asChild
-                  className="bg-sky-700 hover:bg-sky-600 text-gray-100 px-6 py-2.5 rounded-md text-sm font-medium transition-colors flex items-center w-full sm:w-auto"
-                >
+                <Button asChild className="w-full sm:w-auto">
                   <Link href="/buyer-report" className="flex items-center">
                     For my Buyer
                     <UsersIcon className="ml-2 h-5 w-5" />
@@ -222,7 +218,7 @@ export default function HomePage() {
                 </Button>
                 <Button
                   asChild
-                  className="bg-sky-700 hover:bg-sky-600 text-gray-100 px-6 py-2.5 rounded-md text-sm font-medium transition-colors flex items-center w-full sm:w-auto"
+                  className="w-full sm:w-auto"
                 >
                   <Link href="/cma-report" className="flex items-center">
                     For my Seller
