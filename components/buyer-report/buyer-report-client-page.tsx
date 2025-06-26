@@ -10,6 +10,7 @@ import BuyerCriteriaForm from "@/components/buyer-report/buyer-criteria-form"
 import ListingsForm from "@/components/buyer-report/listings-form"
 import RealtorNotesForm from "@/components/buyer-report/realtor-notes-form"
 import ComparisonReport from "@/components/buyer-report/comparison-report"
+import RealtorHeader from "@/components/buyer-report/realtor-header"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -232,6 +233,7 @@ export default function BuyerReportClientPage({ googleMapsApiKey }: BuyerReportC
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex-grow flex flex-col overflow-hidden">
+                <RealtorHeader reportData={reportData} />
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-grow flex flex-col">
                   <TabsList className="grid w-full grid-cols-2 mb-4 shrink-0">
                     <TabsTrigger

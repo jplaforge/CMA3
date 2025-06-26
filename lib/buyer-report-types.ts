@@ -39,6 +39,9 @@ export interface BuyerReportState {
   preparedDate: string
   preparedBy: string
   realtorAgency: string
+  realtorPhoto?: string
+  realtorLat?: number
+  realtorLng?: number
   primaryColor?: string
   secondaryColor?: string
   buyerCriteria: BuyerCriteria
@@ -78,6 +81,9 @@ export const initialBuyerReportState: BuyerReportState = {
   preparedDate: new Date().toLocaleDateString("en-CA"),
   preparedBy: "",
   realtorAgency: "",
+  realtorPhoto: "",
+  realtorLat: undefined,
+  realtorLng: undefined,
   buyerCriteria: {
     priceRange: { min: "", max: "" },
     beds: "",
