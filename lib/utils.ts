@@ -58,6 +58,7 @@ export function getContrastingTextColor(color?: string): string {
   return hsp > 127.5 ? "#000000" : "#FFFFFF" // Threshold can be adjusted
 }
 
+// Exported so API routes can validate and normalize colors returned by the LLM
 export function parseCssColor(color?: string): [number, number, number] | null {
   if (!color) return null
 

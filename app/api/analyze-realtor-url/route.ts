@@ -114,12 +114,15 @@ export async function POST(req: NextRequest) {
     const normalizeColor = (color?: string): string | undefined => {
       if (!color) return undefined
       const trimmed = color.trim().toLowerCase()
-      if (parseCssColor(trimmed)) return color
-      return colorMap[trimmed] ?? color
+      // If already a valid CSS color string, use the sanitized value
+      if (parseCssColor(trimmed)) return trimmed
+      // Otherwise fall back to a mapped name or keep the sanitized string
+      return colorMap[trimmed] ?? trimmed
     }
 
     const normalizedPrimary = normalizeColor(extractedProfile.primaryColor)
     const normalizedSecondary = normalizeColor(extractedProfile.secondaryColor)
+    // Store normalized colors so downstream consumers receive consistent CSS values
 
     // 4. Save to Supabase
     // Optional: Check if a user is authenticated if your table uses user_id
