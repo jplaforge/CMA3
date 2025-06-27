@@ -25,6 +25,7 @@ interface RealtorProfile {
   agency_name?: string
   primary_color?: string
   secondary_color?: string
+  realtor_photo_url?: string
 }
 
 export default function HomePage() {
@@ -160,6 +161,13 @@ export default function HomePage() {
                     <CheckCircle className="mr-1 h-4 w-4" />
                     Profile Analysis Complete & Saved:
                   </p>
+                  {analysisResult.realtor_photo_url && (
+                    <img
+                      src={analysisResult.realtor_photo_url}
+                      alt="Realtor photo"
+                      className="w-20 h-20 rounded-full object-cover mx-auto mb-2"
+                    />
+                  )}
                   {analysisResult.realtor_name && (
                     <p>
                       <strong>Realtor:</strong> {analysisResult.realtor_name}

@@ -62,6 +62,7 @@ export default function BuyerReportClientPage({ googleMapsApiKey }: BuyerReportC
             ...prev,
             preparedBy: profile.realtor_name || "",
             realtorAgency: profile.agency_name || "",
+            realtorPhoto: profile.realtor_photo_url || prev.realtorPhoto,
             primaryColor: profile.primary_color,
             secondaryColor: profile.secondary_color,
           }))

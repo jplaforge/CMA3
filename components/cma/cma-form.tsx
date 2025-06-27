@@ -31,6 +31,7 @@ import {
 } from "@/lib/cma-types"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import ReportPreview from "@/components/cma/report-preview"
+import RealtorHeader from "@/components/cma/realtor-header"
 import Link from "next/link"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { getContrastingTextColor } from "@/lib/utils"
@@ -64,6 +65,7 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
             ...prev,
             preparedBy: profile.realtor_name || "",
             realtorAgency: profile.agency_name || "",
+            realtorPhoto: profile.realtor_photo_url || prev.realtorPhoto,
             primaryColor: profile.primary_color || prev.primaryColor,
             secondaryColor: profile.secondary_color || prev.secondaryColor,
           }))
@@ -764,6 +766,7 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
                   Print Report
                 </Button>
               </div>
+              <RealtorHeader reportData={cmaReportData} />
               <div className={`border rounded-lg shadow-sm overflow-hidden flex-grow ${cardClassName}`}>
                 {ReportPreview && <ReportPreview data={cmaReportData} apiKey={googleMapsApiKey} />}
               </div>
