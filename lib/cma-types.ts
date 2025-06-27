@@ -115,6 +115,9 @@ export interface CmaReportDataState {
   preparedDate: string
   preparedBy: string
   realtorAgency: string
+  realtorPhoto?: string
+  primaryColor?: string
+  secondaryColor?: string
   subjectProperty: PropertyInput
   comparableProperties: ComparableProperty[] // Updated to include status and more details
   generalNotes: string // Can be part of Analysis & Recommended Price Range
@@ -152,6 +155,9 @@ export const initialCmaReportData: CmaReportDataState = {
   preparedDate: new Date().toISOString().split("T")[0],
   preparedBy: "",
   realtorAgency: "",
+  realtorPhoto: "",
+  primaryColor: "",
+  secondaryColor: "",
   subjectProperty: createEmptyPropertyInput(),
   comparableProperties: [],
   generalNotes: "",

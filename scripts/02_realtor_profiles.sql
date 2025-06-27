@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS realtor_profiles (
     agency_name TEXT,
     primary_color TEXT,
     secondary_color TEXT,
+    realtor_photo_url TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -55,3 +56,4 @@ COMMENT ON COLUMN realtor_profiles.realtor_name IS 'Extracted name of the realto
 COMMENT ON COLUMN realtor_profiles.agency_name IS 'Extracted name of the real estate agency.';
 COMMENT ON COLUMN realtor_profiles.primary_color IS 'Extracted primary theme color (e.g., hex or descriptive).';
 COMMENT ON COLUMN realtor_profiles.secondary_color IS 'Extracted secondary theme color (e.g., hex or descriptive).';
+COMMENT ON COLUMN realtor_profiles.realtor_photo_url IS 'URL to the realtor\'s profile photo, if found.';

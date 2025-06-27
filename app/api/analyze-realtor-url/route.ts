@@ -24,6 +24,11 @@ const RealtorProfileSchema = z.object({
     .describe(
       "The secondary or accent theme color of the website (e.g., 'gold', '#FFD700', 'rgb(255, 215, 0)'). Prioritize hex codes if available.",
     ),
+  realtorPhotoUrl: z
+    .string()
+    .url()
+    .optional()
+    .describe("URL of the realtor's profile photo, if detectable."),
 })
 
 export async function POST(req: NextRequest) {
@@ -73,6 +78,24 @@ export async function POST(req: NextRequest) {
     const metaDescription = $('meta[name="description"]').attr("content")
     if (metaDescription) textContent += `Meta Description: ${metaDescription}\n\n`
 
+    // Attempt to find a profile image
+    let realtorPhotoUrl =
+      $('meta[property="og:image"]').attr("content") ||
+      $('meta[name="twitter:image"]').attr("content") ||
+      $(
+        'img[src*="realtor" i],img[src*="agent" i],img[src*="profile" i],img[src*="headshot" i]'
+      )
+        .first()
+        .attr("src") ||
+      ""
+    if (realtorPhotoUrl && !realtorPhotoUrl.startsWith("http")) {
+      try {
+        realtorPhotoUrl = new URL(realtorPhotoUrl, validatedUrl).href
+      } catch {
+        realtorPhotoUrl = ""
+      }
+    }
+
     // Extract main body text (simplified)
     $("body").find("script, style, noscript, iframe, header, footer, nav").remove() // Remove less relevant tags
     textContent += $("body").text().replace(/\s\s+/g, " ").trim().substring(0, 15000) // Limit to ~15k chars
@@ -113,6 +136,7 @@ export async function POST(req: NextRequest) {
           agency_name: extractedProfile.agencyName,
           primary_color: extractedProfile.primaryColor,
           secondary_color: extractedProfile.secondaryColor,
+          realtor_photo_url: realtorPhotoUrl || null,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "realtor_url" },
