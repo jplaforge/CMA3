@@ -92,7 +92,7 @@ export default function HomePage() {
       style={{ background: "linear-gradient(to bottom, #F1F8FD, #EFF7FC)" }}
     >
       <header className="sticky top-0 z-50 w-full border-b border-[#1E404B] bg-[#1E404B]">
-        <div className="container mx-auto flex h-20 items-center justify-center py-4 px-4 md:px-6">
+        <div className="container mx-auto flex h-24 items-center justify-center py-4 px-4 md:px-6">
           <Link href="/home" className="flex items-center" prefetch={false}>
             <Image
               src="/logos/welcomespaces-logo-light.png"
