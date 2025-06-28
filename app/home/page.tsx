@@ -1,98 +1,304 @@
+"use client"
+
+import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import {
+  ArrowRightIcon,
+  UsersIcon,
+  BarChartIcon,
+  LinkIcon,
+  CheckCircle,
+  AlertTriangle,
+  Loader2,
+  UserCheck2,
+  FileText,
+} from "lucide-react"
+import { useState } from "react"
 
-export default function Home() {
+// Define a type for the profile data we expect
+interface RealtorProfile {
+  realtor_url: string
+  realtor_name?: string
+  agency_name?: string
+  primary_color?: string
+  secondary_color?: string
+  realtor_photo_url?: string
+}
+
+export default function HomePage() {
+  const [realtorUrl, setRealtorUrl] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [analysisResult, setAnalysisResult] = useState<RealtorProfile | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleAnalyzeAndSaveUrl = async () => {
+    if (!realtorUrl) {
+      setError("Please enter a URL.")
+      return
+    }
+
+    // ---------- NORMALISE URL ----------
+    // If the user forgot to include a protocol, assume HTTPS
+    let preparedUrl = realtorUrl.trim()
+    if (!/^https?:\/\//i.test(preparedUrl)) {
+      preparedUrl = `https://${preparedUrl}`
+    }
+
+    setIsLoading(true)
+    setError(null)
+    setAnalysisResult(null)
+
+    try {
+      const response = await fetch("/api/analyze-realtor-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ realtorUrl: preparedUrl }),
+      })
+
+      const raw = await response.text()
+      let data: any = {}
+      try {
+        data = raw ? JSON.parse(raw) : {}
+      } catch {
+        data = { error: raw }
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || `Server responded with ${response.status}`)
+      }
+
+      const profileData = data as RealtorProfile
+      setAnalysisResult(profileData)
+      if (typeof window !== "undefined") {
+        localStorage.setItem("realtorProfile", JSON.stringify(profileData))
+      }
+      setRealtorUrl(preparedUrl)
+    } catch (err: any) {
+      console.error("Failed to analyze URL:", err)
+      setError(err.message || "An unknown error occurred.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const canProceed = !!analysisResult && !isLoading && !error
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="container mx-auto flex h-24 items-center justify-center py-4 px-4 md:px-6">
-        <h1 className="text-3xl font-bold">Welcome to the Home Page</h1>
-      </div>
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-100 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-zinc-900 lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By <img src="/vercel.svg" alt="Vercel Logo" className="dark:invert" width={100} height={24} />
-          </a>
+    <div
+      className="flex flex-col min-h-screen font-sans text-[#1E404B]"
+      style={{ background: "linear-gradient(to bottom, #F1F8FD, #EFF7FC)" }}
+    >
+      <header className="sticky top-0 z-50 w-full border-b border-[#1E404B] bg-[#1E404B]">
+        <div className="container mx-auto flex h-24 items-center justify-center py-4 px-4 md:px-6">
+          <Link href="/home" className="flex items-center" prefetch={false}>
+            <Image
+              src="/logos/welcomespaces-logo-light.png"
+              alt="WelcomeSpaces Logo"
+              width={500}
+              height={100}
+              priority
+            />
+          </Link>
         </div>
-      </div>
+      </header>
 
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+      <main className="flex-1">
+        {/* Hero Section */}
+        <section className="relative py-16 md:py-24 lg:py-32 overflow-hidden">
+          <div aria-hidden="true" className="absolute inset-0 -z-10">
+            <div className="absolute inset-0 bg-gradient-to-b from-[#F1F8FD] to-[#EFF7FC]"></div>
+          </div>
+          <div className="container mx-auto px-4 md:px-6 text-center">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter mb-6 leading-tight">
+              Unlock Powerful Real Estate Insights
+            </h1>
+            <p className="max-w-3xl mx-auto text-md md:text-lg mb-10">
+              Our suite provides comprehensive tools for Comparative Market Analysis (CMA) and detailed Buyer Reports,
+              empowering you to make data-driven decisions with clarity and precision.
+            </p>
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
+            {/* Realtor URL Input Section */}
+            <div className="mb-10 max-w-xl mx-auto">
+              <p className="mb-3 text-sm">
+                Personalize your reports by adding your official realtor website. We&apos;ll try to extract key branding
+                info.
+              </p>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="relative flex-grow">
+                  <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+                  <Input
+                    type="url"
+                    value={realtorUrl}
+                    onChange={(e) => setRealtorUrl(e.target.value)}
+                    placeholder="e.g., https://www.yourrealtysite.com"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-md bg-white border-[#1E404B] text-[#1E404B] focus:ring-[#64CC7D] focus:border-[#64CC7D] placeholder-gray-500"
+                    aria-label="Realtor official URL"
+                    disabled={isLoading}
+                  />
+                </div>
+                <Button
+                  onClick={handleAnalyzeAndSaveUrl}
+                  type="button"
+                  disabled={isLoading}
+                  style={{ backgroundColor: "#64CC7D", color: "#1E404B" }}
+                >
+                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Analyze & Save
+                </Button>
+              </div>
+              {error && (
+                <p className="text-red-400 text-xs flex items-center justify-center">
+                  <AlertTriangle className="mr-1 h-4 w-4" />
+                  {error}
+                </p>
+              )}
+              {analysisResult && !error && (
+                <div className="mt-4 p-4 bg-white/50 border border-[#1E404B] rounded-md text-left text-xs">
+                  <p className="text-green-400 font-semibold mb-2 flex items-center">
+                    <CheckCircle className="mr-1 h-4 w-4" />
+                    Profile Analysis Complete & Saved:
+                  </p>
+                  {analysisResult.realtor_photo_url && (
+                    <img
+                      src={analysisResult.realtor_photo_url || "/placeholder.svg"}
+                      alt="Realtor photo"
+                      className="w-20 h-20 rounded-full object-cover mx-auto mb-2"
+                    />
+                  )}
+                  {analysisResult.realtor_name && (
+                    <p>
+                      <strong>Realtor:</strong> {analysisResult.realtor_name}
+                    </p>
+                  )}
+                  {analysisResult.agency_name && (
+                    <p>
+                      <strong>Agency:</strong> {analysisResult.agency_name}
+                    </p>
+                  )}
+                  {analysisResult.primary_color && (
+                    <p>
+                      <strong>Primary Color:</strong>{" "}
+                      <span
+                        style={{
+                          color: analysisResult.primary_color,
+                          backgroundColor:
+                            analysisResult.primary_color.startsWith("#") ||
+                            analysisResult.primary_color.startsWith("rgb")
+                              ? "transparent"
+                              : "gray",
+                        }}
+                      >
+                        {analysisResult.primary_color}
+                      </span>
+                    </p>
+                  )}
+                  {analysisResult.secondary_color && (
+                    <p>
+                      <strong>Secondary Color:</strong>{" "}
+                      <span
+                        style={{
+                          color: analysisResult.secondary_color,
+                          backgroundColor:
+                            analysisResult.secondary_color.startsWith("#") ||
+                            analysisResult.secondary_color.startsWith("rgb")
+                              ? "transparent"
+                              : "gray",
+                        }}
+                      >
+                        {analysisResult.secondary_color}
+                      </span>
+                    </p>
+                  )}
+                  <p className="mt-1">
+                    <strong>URL:</strong> {analysisResult.realtor_url}
+                  </p>
+                </div>
+              )}
+            </div>
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Discover and deploy boilerplate example Next.js&nbsp;projects.
-          </p>
-        </a>
+            {/* Proceed Buttons Section */}
+            {canProceed && (
+              <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
+                <Button asChild className="w-full sm:w-auto" style={{ backgroundColor: "#64CC7D", color: "#1E404B" }}>
+                  <Link href="/cma-ai-gen?type=buyer" className="flex items-center">
+                    For my Buyer
+                    <UsersIcon className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+                <Button asChild className="w-full sm:w-auto" style={{ backgroundColor: "#64CC7D", color: "#1E404B" }}>
+                  <Link href="/cma-ai-gen?type=seller" className="flex items-center">
+                    For my Seller
+                    <FileText className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </div>
+        </section>
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-      <Button>Click Me</Button>
-    </main>
+        {/* Key Features Section */}
+        <section className="py-16 md:py-24 bg-white">
+          <div className="container mx-auto px-4 md:px-6">
+            <h2 className="text-4xl font-bold text-center mb-16 tracking-tight">
+              Why Choose <span className="text-[#64CC7D]">WelcomeSpaces</span>?
+            </h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[
+                {
+                  icon: <UserCheck2 className="h-10 w-10 text-sky-400 mb-4" />,
+                  title: "Personalized Reports",
+                  description: "Automatically brand reports with your name, agency, and colors after URL analysis.",
+                  link: "#", // Link to section explaining this or keep as is
+                },
+                {
+                  icon: <UsersIcon className="h-10 w-10 text-sky-400 mb-4" />,
+                  title: "Buyer Report Generation",
+                  description:
+                    "Craft detailed, client-ready reports comparing listings to buyer criteria with map views and notes.",
+                  link: "/cma-ai-gen",
+                },
+                {
+                  icon: <BarChartIcon className="h-10 w-10 text-sky-400 mb-4" />,
+                  title: "In-Depth CMA",
+                  description:
+                    "Perform comprehensive market analysis with subject properties vs. comparables, visualized on maps.",
+                  link: "/cma-report",
+                },
+              ].map((feature) => (
+                <Card
+                  key={feature.title}
+                  className="bg-white border-[#1E404B] shadow-xl hover:shadow-lg transition-all duration-300 ease-in-out transform hover:-translate-y-1 rounded-xl overflow-hidden group"
+                >
+                  <CardContent className="p-8 flex flex-col items-center text-center">
+                    {feature.icon}
+                    <CardTitle className="text-2xl font-semibold mb-3 group-hover:text-[#64CC7D] transition-colors">
+                      {feature.title}
+                    </CardTitle>
+                    <CardDescription className="mb-6 text-sm leading-relaxed">{feature.description}</CardDescription>
+                    <Button
+                      variant="link"
+                      asChild
+                      className="text-[#64CC7D] group-hover:text-[#64CC7D]/80 transition-colors mt-auto"
+                    >
+                      <Link href={feature.link}>
+                        Learn More <ArrowRightIcon className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer className="py-10 text-center text-[#1E404B] border-t border-[#1E404B] bg-white">
+        <p>&copy; {new Date().getFullYear()} WelcomeSpaces. All rights reserved.</p>
+        <p className="text-xs mt-1">Empowering Real Estate Professionals</p>
+      </footer>
+    </div>
   )
 }
