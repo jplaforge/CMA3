@@ -163,7 +163,7 @@ export default function HomePage() {
                   </p>
                   {analysisResult.realtor_photo_url && (
                     <img
-                      src={analysisResult.realtor_photo_url}
+                      src={analysisResult.realtor_photo_url || "/placeholder.svg"}
                       alt="Realtor photo"
                       className="w-20 h-20 rounded-full object-cover mx-auto mb-2"
                     />

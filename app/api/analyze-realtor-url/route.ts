@@ -3,7 +3,7 @@ import { openai } from "@ai-sdk/openai"
 import { generateObject } from "ai"
 import { z } from "zod"
 import * as cheerio from "cheerio"
-import { createAdminClient } from "@/lib/supabase/admin" // <-- use new helper
+import { createAdminClient } from "@/lib/supabase/admin"
 
 // Define the expected structure of the extracted data
 const RealtorProfileSchema = z.object({
@@ -24,19 +24,17 @@ const RealtorProfileSchema = z.object({
     .describe(
       "The secondary or accent theme color of the website (e.g., 'gold', '#FFD700', 'rgb(255, 215, 0)'). Prioritize hex codes if available.",
     ),
-  realtorPhotoUrl: z
-    .string()
-    .url()
-    .optional()
-    .describe("URL of the realtor's profile photo, if detectable."),
+  realtorPhotoUrl: z.string().url().optional().describe("URL of the realtor's profile photo, if detectable."),
 })
 
 export async function POST(req: NextRequest) {
-  let supabase
+  // --- (A) SAFE SUPABASE INITIALISATION ------------------------------------
+  let supabase: ReturnType<typeof createAdminClient> | undefined
   try {
     supabase = createAdminClient()
-  } catch (e: any) {
-    return NextResponse.json({ error: `Supabase setup error: ${e.message}` }, { status: 500 })
+  } catch {
+    // Not fatal in preview / local environments.
+    console.warn("[analyze-realtor-url] Supabase SERVICE-ROLE env vars not found – continuing without DB upsert.")
   }
 
   try {
@@ -82,11 +80,7 @@ export async function POST(req: NextRequest) {
     let realtorPhotoUrl =
       $('meta[property="og:image"]').attr("content") ||
       $('meta[name="twitter:image"]').attr("content") ||
-      $(
-        'img[src*="realtor" i],img[src*="agent" i],img[src*="profile" i],img[src*="headshot" i]'
-      )
-        .first()
-        .attr("src") ||
+      $('img[src*="realtor" i],img[src*="agent" i],img[src*="profile" i],img[src*="headshot" i]').first().attr("src") ||
       ""
     if (realtorPhotoUrl && !realtorPhotoUrl.startsWith("http")) {
       try {
@@ -97,17 +91,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Extract main body text (simplified)
-    $("body").find("script, style, noscript, iframe, header, footer, nav").remove() // Remove less relevant tags
-    textContent += $("body").text().replace(/\s\s+/g, " ").trim().substring(0, 15000) // Limit to ~15k chars
+    $("body").find("script, style, noscript, iframe, header, footer, nav").remove()
+    textContent += $("body").text().replace(/\s\s+/g, " ").trim().substring(0, 15000)
 
     if (textContent.length < 100) {
-      // Basic check if content is too short
       return NextResponse.json({ error: "Could not extract sufficient text content from the URL." }, { status: 400 })
     }
 
     // 3. Call OpenAI API
     const { object: extractedProfile } = await generateObject({
-      model: openai("gpt-4o"), // Or your preferred model
+      model: openai("gpt-4o"),
       schema: RealtorProfileSchema,
       prompt: `Analyze the following website content from ${validatedUrl} to identify key details about the realtor or real estate agency. Focus on information explicitly present on the page.
       Extracted Website Content:
@@ -119,40 +112,37 @@ export async function POST(req: NextRequest) {
       If a piece of information is not clearly available, omit it or leave the field empty. Do not guess.`,
     })
 
-    // 4. Save to Supabase
-    // Optional: Check if a user is authenticated if your table uses user_id
-    // const { data: { user } } = await supabase.auth.getUser();
-    // if (!user) {
-    //   return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
-    // }
+    // 4. Save to Supabase (optional – only if env vars exist)
+    let savedData = extractedProfile
+    if (supabase) {
+      const { data, error: dbError } = await supabase
+        .from("realtor_profiles")
+        .upsert(
+          {
+            realtor_url: validatedUrl,
+            realtor_name: extractedProfile.realtorName,
+            agency_name: extractedProfile.agencyName,
+            primary_color: extractedProfile.primaryColor,
+            secondary_color: extractedProfile.secondaryColor,
+            realtor_photo_url: realtorPhotoUrl || null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "realtor_url" },
+        )
+        .select()
+        .single()
 
-    const { data: savedData, error: dbError } = await supabase
-      .from("realtor_profiles")
-      .upsert(
-        {
-          // user_id: user.id, // if using user authentication
-          realtor_url: validatedUrl,
-          realtor_name: extractedProfile.realtorName,
-          agency_name: extractedProfile.agencyName,
-          primary_color: extractedProfile.primaryColor,
-          secondary_color: extractedProfile.secondaryColor,
-          realtor_photo_url: realtorPhotoUrl || null,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "realtor_url" },
-      ) // Upsert based on URL
-      .select()
-      .single()
-
-    if (dbError) {
-      console.error("Supabase error:", dbError)
-      return NextResponse.json({ error: `Database error: ${dbError.message}` }, { status: 500 })
+      if (dbError) {
+        console.error("Supabase error:", dbError)
+        // Don't abort; just log and fall back to returning extracted profile.
+      } else if (data) {
+        savedData = data
+      }
     }
 
     return NextResponse.json(savedData, { status: 200 })
   } catch (error: any) {
     console.error("API Error:", error)
-    // Check if it's an AI SDK error
     if (error.name === "AIError") {
       return NextResponse.json(
         { error: `AI processing error: ${error.message} (Type: ${error.type}, Code: ${error.code})` },
