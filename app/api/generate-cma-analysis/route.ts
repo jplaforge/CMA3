@@ -22,6 +22,21 @@ const analysisSchema = z.object({
     .describe(
       "A final summary for the client. Include overall market observations, the subject property's position within the market based on the comps, and a concluding recommendation.",
     ),
+  listingStrategy: z
+    .object({
+      priceNarrative: z.string().optional(),
+      keySellingPoints: z.array(z.string()).optional(),
+      marketingPlan: z
+        .object({
+          mls: z.boolean().optional(),
+          socialMedia: z.boolean().optional(),
+          openHouse: z.boolean().optional(),
+          videoTour: z.boolean().optional(),
+          other: z.array(z.string()).optional(),
+        })
+        .optional(),
+    })
+    .optional(),
 })
 
 // Helper to format a property object into a readable string for the prompt
@@ -55,6 +70,8 @@ export async function POST(request: NextRequest) {
       .map((comp, index) => formatPropertyForPrompt(comp, `Comparable #${index + 1}`))
       .join("")
 
+    const location = subjectProperty.address || subjectProperty.fullAddress || "the property's location"
+
     const prompt = `
 You are an expert real estate analyst tasked with creating a Comparative Market Analysis (CMA) summary.
 Based on the provided subject property and comparable properties, generate a complete analysis.
@@ -63,13 +80,15 @@ Here is the data:
 ${subjectPrompt}
 ${compsPrompt}
 
-Your task is to generate the following three sections based on your analysis:
+Your task is to generate the following four sections based on your analysis:
 
 1.  **Price Adjustment Notes**: Write a detailed, paragraph-style analysis comparing the subject property to the comparables. Point out key differences (e.g., square footage, number of bathrooms, renovations, lot size) and explain how these differences would logically lead to price adjustments. For example, if a comparable is smaller, the subject property's value would be adjusted upwards in comparison.
 
 2.  **Suggested Price Range**: Based on your analysis and the sale prices of the comparables, provide a realistic low and high market value for the subject property. The range should be logical and defensible.
 
 3.  **General Notes & Summary**: Write a concluding summary for the client. Briefly touch on the current market conditions as suggested by the comps, summarize the subject property's standing, and provide a final recommendation.
+
+4.  **Marketing Strategy**: Recommend a listing strategy tailored to the location (${location}). Include a short pricing narrative, three to five key selling points highlighting local advantages, and which marketing channels (MLS, social media, open houses, video tours, other) should be used.
 
 Please provide the output in the structured format requested.
 `

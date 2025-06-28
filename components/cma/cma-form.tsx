@@ -305,8 +305,9 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
         },
         priceAdjustmentNotes: analysis.priceAdjustmentNotes || "",
         generalNotes: analysis.generalNotes || "",
+        listingStrategy: analysis.listingStrategy || prev.listingStrategy,
       }))
-      toast({ title: "AI Analysis Generated", description: "Pricing and notes have been updated." })
+      toast({ title: "AI Analysis Generated", description: "Pricing, notes, and strategy have been updated." })
       if (!activeAccordionItems.includes("analysis-conclusion")) {
         setActiveAccordionItems((prevItems) => [...prevItems, "analysis-conclusion"])
       }
@@ -697,7 +698,7 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
                       style={{ backgroundColor: "var(--primary)", color: textColorForPrimary }}
                     >
                       <Sparkles className="h-4 w-4 mr-2" />
-                      {isAiAnalysisLoading ? "Generating..." : "Generate AI Analysis & Pricing"}
+                      {isAiAnalysisLoading ? "Generating..." : "Generate AI Analysis & Strategy"}
                     </Button>
                     <div>
                       <Label htmlFor="suggestedPriceRangeLow">Suggested Price Range (Low)</Label>

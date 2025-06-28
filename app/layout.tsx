@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "v0 App",
   description: "Created with v0",
   generator: "v0.dev",
+  icons: "/favicon.svg",
 }
 
 import ClientLayout from "./clientLayout"
