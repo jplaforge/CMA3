@@ -1,90 +1,115 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import {
-  ArrowRightIcon,
-  UsersIcon,
-  BarChartIcon,
-  LinkIcon,
-  CheckCircle,
-  AlertTriangle,
-  Loader2,
-  UserCheck2,
-  FileText,
-} from "lucide-react"
-import { useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Loader2, FileText, BarChart3, Users, CheckCircle, ArrowRight, Globe } from "lucide-react"
 
-// Define a type for the profile data we expect
 interface RealtorProfile {
-  realtor_url: string
-  realtor_name?: string
-  agency_name?: string
-  primary_color?: string
-  secondary_color?: string
-  realtor_photo_url?: string
+  realtorName?: string
+  agencyName?: string
+  primaryColor?: string
+  secondaryColor?: string
+  realtorPhotoUrl?: string
 }
 
 export default function HomePage() {
   const [realtorUrl, setRealtorUrl] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [analysisResult, setAnalysisResult] = useState<RealtorProfile | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [realtorProfile, setRealtorProfile] = useState<RealtorProfile | null>(null)
+  const [error, setError] = useState("")
+
+  // Apply realtor's secondary color to body background
+  useEffect(() => {
+    const savedProfile = localStorage.getItem("realtorProfile")
+    if (savedProfile) {
+      try {
+        const profile = JSON.parse(savedProfile)
+        setRealtorProfile(profile)
+
+        // Apply secondary color as background if available
+        if (profile.secondaryColor) {
+          document.body.style.backgroundColor = profile.secondaryColor
+          // Set contrasting text color
+          const isLightColor = isColorLight(profile.secondaryColor)
+          document.body.style.color = isLightColor ? "#1E404B" : "#FFFFFF"
+        }
+      } catch (e) {
+        console.error("Error parsing saved realtor profile:", e)
+      }
+    }
+  }, [])
+
+  // Helper function to determine if a color is light
+  const isColorLight = (color: string): boolean => {
+    // Convert hex to RGB
+    let r, g, b
+    if (color.startsWith("#")) {
+      const hex = color.slice(1)
+      r = Number.parseInt(hex.substr(0, 2), 16)
+      g = Number.parseInt(hex.substr(2, 2), 16)
+      b = Number.parseInt(hex.substr(4, 2), 16)
+    } else if (color.startsWith("rgb")) {
+      const matches = color.match(/\d+/g)
+      if (matches) {
+        r = Number.parseInt(matches[0])
+        g = Number.parseInt(matches[1])
+        b = Number.parseInt(matches[2])
+      } else {
+        return true // Default to light if can't parse
+      }
+    } else {
+      return true // Default to light for named colors
+    }
+
+    // Calculate luminance
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+    return luminance > 0.5
+  }
 
   const handleAnalyzeAndSaveUrl = async () => {
-    if (!realtorUrl) {
-      setError("Please enter a URL.")
+    if (!realtorUrl.trim()) {
+      setError("Please enter a realtor URL")
       return
     }
 
-    // ---------- NORMALISE URL ----------
-    // If the user forgot to include a protocol, assume HTTPS
-    let preparedUrl = realtorUrl.trim()
-    if (!/^https?:\/\//i.test(preparedUrl)) {
-      preparedUrl = `https://${preparedUrl}`
-    }
-
-    setIsLoading(true)
-    setError(null)
-    setAnalysisResult(null)
+    setIsAnalyzing(true)
+    setError("")
 
     try {
       const response = await fetch("/api/analyze-realtor-url", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ realtorUrl: preparedUrl }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ realtorUrl: realtorUrl.trim() }),
       })
 
-      const raw = await response.text()
-      let data: any = {}
-      try {
-        data = raw ? JSON.parse(raw) : {}
-      } catch {
-        data = { error: raw }
-      }
+      const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || `Server responded with ${response.status}`)
+        throw new Error(data.error || "Failed to analyze URL")
       }
 
-      const profileData = data as RealtorProfile
-      setAnalysisResult(profileData)
-      if (typeof window !== "undefined") {
-        localStorage.setItem("realtorProfile", JSON.stringify(profileData))
+      setRealtorProfile(data)
+      localStorage.setItem("realtorProfile", JSON.stringify(data))
+
+      // Apply secondary color as background if available
+      if (data.secondaryColor) {
+        document.body.style.backgroundColor = data.secondaryColor
+        // Set contrasting text color
+        const isLightColor = isColorLight(data.secondaryColor)
+        document.body.style.color = isLightColor ? "#1E404B" : "#FFFFFF"
       }
-      setRealtorUrl(preparedUrl)
     } catch (err: any) {
-      console.error("Failed to analyze URL:", err)
-      setError(err.message || "An unknown error occurred.")
+      setError(err.message)
     } finally {
-      setIsLoading(false)
+      setIsAnalyzing(false)
     }
   }
-
-  const canProceed = !!analysisResult && !isLoading && !error
 
   return (
     <div
@@ -94,210 +119,237 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 w-full border-b border-[#1E404B] bg-[#1E404B]">
         <div className="container mx-auto flex h-24 items-center justify-center py-4 px-4 md:px-6">
           <Link href="/home" className="flex items-center" prefetch={false}>
-            <Image
-              src="/logos/welcomespaces-logo-light.png"
-              alt="WelcomeSpaces Logo"
-              width={500}
-              height={100}
-              priority
-            />
+            <img src="/logos/welcomespaces-logo-light.png" alt="WelcomeSpaces" className="h-12 w-auto" />
           </Link>
         </div>
       </header>
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative py-16 md:py-24 lg:py-32 overflow-hidden">
-          <div aria-hidden="true" className="absolute inset-0 -z-10">
-            <div className="absolute inset-0 bg-gradient-to-b from-[#F1F8FD] to-[#EFF7FC]"></div>
-          </div>
-          <div className="container mx-auto px-4 md:px-6 text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter mb-6 leading-tight">
-              Unlock Powerful Real Estate Insights
-            </h1>
-            <p className="max-w-3xl mx-auto text-md md:text-lg mb-10">
-              Our suite provides comprehensive tools for Comparative Market Analysis (CMA) and detailed Buyer Reports,
-              empowering you to make data-driven decisions with clarity and precision.
-            </p>
-
-            {/* Realtor URL Input Section */}
-            <div className="mb-10 max-w-xl mx-auto">
-              <p className="mb-3 text-sm">
-                Personalize your reports by adding your official realtor website. We&apos;ll try to extract key branding
-                info.
-              </p>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="relative flex-grow">
-                  <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
-                  <Input
-                    type="url"
-                    value={realtorUrl}
-                    onChange={(e) => setRealtorUrl(e.target.value)}
-                    placeholder="e.g., https://www.yourrealtysite.com"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-md bg-white border-[#1E404B] text-[#1E404B] focus:ring-[#64CC7D] focus:border-[#64CC7D] placeholder-gray-500"
-                    aria-label="Realtor official URL"
-                    disabled={isLoading}
-                  />
-                </div>
-                <Button
-                  onClick={handleAnalyzeAndSaveUrl}
-                  type="button"
-                  disabled={isLoading}
-                  style={{ backgroundColor: "#64CC7D", color: "#1E404B" }}
-                >
-                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Analyze & Save
-                </Button>
-              </div>
-              {error && (
-                <p className="text-red-400 text-xs flex items-center justify-center">
-                  <AlertTriangle className="mr-1 h-4 w-4" />
-                  {error}
+        <section className="w-full py-12 md:py-24 lg:py-32">
+          <div className="container mx-auto px-4 md:px-6">
+            <div className="flex flex-col items-center space-y-4 text-center">
+              <div className="space-y-2">
+                <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl/none">
+                  AI-Powered Real Estate Reports
+                </h1>
+                <p className="mx-auto max-w-[700px] text-gray-600 md:text-xl">
+                  Generate professional buyer reports and CMA analyses in minutes. Powered by advanced AI to help you
+                  serve your clients better.
                 </p>
-              )}
-              {analysisResult && !error && (
-                <div className="mt-4 p-4 bg-white/50 border border-[#1E404B] rounded-md text-left text-xs">
-                  <p className="text-green-400 font-semibold mb-2 flex items-center">
-                    <CheckCircle className="mr-1 h-4 w-4" />
-                    Profile Analysis Complete & Saved:
-                  </p>
-                  {analysisResult.realtor_photo_url && (
-                    <img
-                      src={analysisResult.realtor_photo_url || "/placeholder.svg"}
-                      alt="Realtor photo"
-                      className="w-20 h-20 rounded-full object-cover mx-auto mb-2"
-                    />
-                  )}
-                  {analysisResult.realtor_name && (
-                    <p>
-                      <strong>Realtor:</strong> {analysisResult.realtor_name}
-                    </p>
-                  )}
-                  {analysisResult.agency_name && (
-                    <p>
-                      <strong>Agency:</strong> {analysisResult.agency_name}
-                    </p>
-                  )}
-                  {analysisResult.primary_color && (
-                    <p>
-                      <strong>Primary Color:</strong>{" "}
-                      <span
-                        style={{
-                          color: analysisResult.primary_color,
-                          backgroundColor:
-                            analysisResult.primary_color.startsWith("#") ||
-                            analysisResult.primary_color.startsWith("rgb")
-                              ? "transparent"
-                              : "gray",
-                        }}
-                      >
-                        {analysisResult.primary_color}
-                      </span>
-                    </p>
-                  )}
-                  {analysisResult.secondary_color && (
-                    <p>
-                      <strong>Secondary Color:</strong>{" "}
-                      <span
-                        style={{
-                          color: analysisResult.secondary_color,
-                          backgroundColor:
-                            analysisResult.secondary_color.startsWith("#") ||
-                            analysisResult.secondary_color.startsWith("rgb")
-                              ? "transparent"
-                              : "gray",
-                        }}
-                      >
-                        {analysisResult.secondary_color}
-                      </span>
-                    </p>
-                  )}
-                  <p className="mt-1">
-                    <strong>URL:</strong> {analysisResult.realtor_url}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Proceed Buttons Section */}
-            {canProceed && (
-              <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
-                <Button asChild className="w-full sm:w-auto" style={{ backgroundColor: "#64CC7D", color: "#1E404B" }}>
-                  <Link href="/cma-ai-gen?type=buyer" className="flex items-center">
-                    For my Buyer
-                    <UsersIcon className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button asChild className="w-full sm:w-auto" style={{ backgroundColor: "#64CC7D", color: "#1E404B" }}>
-                  <Link href="/cma-ai-gen?type=seller" className="flex items-center">
-                    For my Seller
-                    <FileText className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
               </div>
-            )}
+            </div>
           </div>
         </section>
 
-        {/* Key Features Section */}
-        <section className="py-16 md:py-24 bg-white">
+        {/* Realtor URL Input Section */}
+        <section className="w-full py-12 bg-white/50">
           <div className="container mx-auto px-4 md:px-6">
-            <h2 className="text-4xl font-bold text-center mb-16 tracking-tight">
-              Why Choose <span className="text-[#64CC7D]">WelcomeSpaces</span>?
-            </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[
-                {
-                  icon: <UserCheck2 className="h-10 w-10 text-sky-400 mb-4" />,
-                  title: "Personalized Reports",
-                  description: "Automatically brand reports with your name, agency, and colors after URL analysis.",
-                  link: "#", // Link to section explaining this or keep as is
-                },
-                {
-                  icon: <UsersIcon className="h-10 w-10 text-sky-400 mb-4" />,
-                  title: "Buyer Report Generation",
-                  description:
-                    "Craft detailed, client-ready reports comparing listings to buyer criteria with map views and notes.",
-                  link: "/cma-ai-gen",
-                },
-                {
-                  icon: <BarChartIcon className="h-10 w-10 text-sky-400 mb-4" />,
-                  title: "In-Depth CMA",
-                  description:
-                    "Perform comprehensive market analysis with subject properties vs. comparables, visualized on maps.",
-                  link: "/cma-report",
-                },
-              ].map((feature) => (
-                <Card
-                  key={feature.title}
-                  className="bg-white border-[#1E404B] shadow-xl hover:shadow-lg transition-all duration-300 ease-in-out transform hover:-translate-y-1 rounded-xl overflow-hidden group"
-                >
-                  <CardContent className="p-8 flex flex-col items-center text-center">
-                    {feature.icon}
-                    <CardTitle className="text-2xl font-semibold mb-3 group-hover:text-[#64CC7D] transition-colors">
-                      {feature.title}
-                    </CardTitle>
-                    <CardDescription className="mb-6 text-sm leading-relaxed">{feature.description}</CardDescription>
-                    <Button
-                      variant="link"
-                      asChild
-                      className="text-[#64CC7D] group-hover:text-[#64CC7D]/80 transition-colors mt-auto"
-                    >
-                      <Link href={feature.link}>
-                        Learn More <ArrowRightIcon className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="mx-auto max-w-2xl">
+              <Card className="border-2 border-[#1E404B]/20 shadow-lg">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl font-bold text-[#1E404B]">Get Started</CardTitle>
+                  <CardDescription>
+                    Enter your realtor website URL to personalize your reports with your branding
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex flex-col space-y-2">
+                    <div className="flex space-x-2">
+                      <Input
+                        type="url"
+                        placeholder="https://your-realtor-website.com"
+                        value={realtorUrl}
+                        onChange={(e) => setRealtorUrl(e.target.value)}
+                        className="flex-1"
+                        disabled={isAnalyzing}
+                      />
+                      <Button
+                        onClick={handleAnalyzeAndSaveUrl}
+                        disabled={isAnalyzing || !realtorUrl.trim()}
+                        className="bg-[#1E404B] hover:bg-[#1E404B]/90 text-white"
+                      >
+                        {isAnalyzing ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Analyzing...
+                          </>
+                        ) : (
+                          <>
+                            <Globe className="mr-2 h-4 w-4" />
+                            Analyze
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    {error && <p className="text-sm text-red-600">{error}</p>}
+                  </div>
+
+                  {realtorProfile && (
+                    <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <span className="font-semibold text-green-800">Profile Analyzed Successfully!</span>
+                      </div>
+                      <div className="space-y-1 text-sm text-green-700">
+                        {realtorProfile.realtorName && (
+                          <p>
+                            <strong>Realtor:</strong> {realtorProfile.realtorName}
+                          </p>
+                        )}
+                        {realtorProfile.agencyName && (
+                          <p>
+                            <strong>Agency:</strong> {realtorProfile.agencyName}
+                          </p>
+                        )}
+                        {realtorProfile.primaryColor && (
+                          <p>
+                            <strong>Primary Color:</strong>{" "}
+                            <span
+                              className="inline-block w-4 h-4 rounded border ml-1"
+                              style={{ backgroundColor: realtorProfile.primaryColor }}
+                            ></span>{" "}
+                            {realtorProfile.primaryColor}
+                          </p>
+                        )}
+                        {realtorProfile.secondaryColor && (
+                          <p>
+                            <strong>Secondary Color:</strong>{" "}
+                            <span
+                              className="inline-block w-4 h-4 rounded border ml-1"
+                              style={{ backgroundColor: realtorProfile.secondaryColor }}
+                            ></span>{" "}
+                            {realtorProfile.secondaryColor}
+                          </p>
+                        )}
+                      </div>
+                      <div className="mt-4 flex space-x-2">
+                        <Link href="/cma-ai-gen">
+                          <Button className="bg-[#64CC7D] hover:bg-[#64CC7D]/90 text-white">
+                            <FileText className="mr-2 h-4 w-4" />
+                            Create Buyer Report
+                          </Button>
+                        </Link>
+                        <Link href="/cma-report">
+                          <Button
+                            variant="outline"
+                            className="border-[#1E404B] text-[#1E404B] hover:bg-[#1E404B]/10 bg-transparent"
+                          >
+                            <BarChart3 className="mr-2 h-4 w-4" />
+                            Create CMA Report
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section className="w-full py-12 md:py-24 lg:py-32">
+          <div className="container mx-auto px-4 md:px-6">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-[#1E404B]">
+                Why Choose WelcomeSpaces?
+              </h2>
+              <p className="mx-auto max-w-[700px] text-gray-600 md:text-xl mt-4">
+                Streamline your real estate business with our comprehensive AI-powered tools
+              </p>
+            </div>
+            <div className="grid gap-6 lg:grid-cols-3 lg:gap-12">
+              <Card className="border-2 border-[#1E404B]/10 hover:border-[#64CC7D]/50 transition-colors hover:shadow-lg">
+                <CardHeader className="text-center">
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-[#64CC7D]/10">
+                    <FileText className="h-6 w-6 text-[#64CC7D]" />
+                  </div>
+                  <CardTitle className="text-xl font-bold text-[#1E404B]">Buyer Reports</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 text-center">
+                    Generate comprehensive buyer reports with property comparisons, market analysis, and personalized
+                    recommendations.
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="border-2 border-[#1E404B]/10 hover:border-[#64CC7D]/50 transition-colors hover:shadow-lg">
+                <CardHeader className="text-center">
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-[#64CC7D]/10">
+                    <BarChart3 className="h-6 w-6 text-[#64CC7D]" />
+                  </div>
+                  <CardTitle className="text-xl font-bold text-[#1E404B]">CMA Analysis</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 text-center">
+                    Create detailed Comparative Market Analysis reports with automated property valuations and market
+                    insights.
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="border-2 border-[#1E404B]/10 hover:border-[#64CC7D]/50 transition-colors hover:shadow-lg">
+                <CardHeader className="text-center">
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-[#64CC7D]/10">
+                    <Users className="h-6 w-6 text-[#64CC7D]" />
+                  </div>
+                  <CardTitle className="text-xl font-bold text-[#1E404B]">Client-Ready</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 text-center">
+                    Professional, branded reports ready to share with clients. Customize with your agency's colors and
+                    branding.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="w-full py-12 md:py-24 lg:py-32 bg-[#1E404B]">
+          <div className="container mx-auto px-4 md:px-6">
+            <div className="flex flex-col items-center space-y-4 text-center">
+              <div className="space-y-2">
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-white">
+                  Ready to Get Started?
+                </h2>
+                <p className="mx-auto max-w-[600px] text-gray-200 md:text-xl">
+                  Join thousands of real estate professionals who trust WelcomeSpaces for their reporting needs.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/cma-ai-gen">
+                  <Button className="bg-[#64CC7D] hover:bg-[#64CC7D]/90 text-white">
+                    <FileText className="mr-2 h-4 w-4" />
+                    Create Your First Report
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="py-10 text-center text-[#1E404B] border-t border-[#1E404B] bg-white">
-        <p>&copy; {new Date().getFullYear()} WelcomeSpaces. All rights reserved.</p>
-        <p className="text-xs mt-1">Empowering Real Estate Professionals</p>
+      {/* Footer */}
+      <footer className="w-full py-6 bg-gray-100">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+            <div className="flex items-center space-x-2">
+              <img src="/logos/welcomespaces-logo-light.png" alt="WelcomeSpaces" className="h-8 w-auto" />
+              <span className="text-sm text-gray-600">© 2024 WelcomeSpaces. All rights reserved.</span>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Badge variant="secondary" className="bg-[#64CC7D]/10 text-[#64CC7D]">
+                AI-Powered
+              </Badge>
+              <Badge variant="secondary" className="bg-[#1E404B]/10 text-[#1E404B]">
+                Professional Reports
+              </Badge>
+            </div>
+          </div>
+        </div>
       </footer>
     </div>
   )
