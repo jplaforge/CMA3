@@ -1,6 +1,6 @@
 import { POST } from "@/app/api/analyze-realtor-url/route"
 import { NextRequest } from "next/server"
-import jest from "jest"
+import { jest } from "@jest/globals"
 
 // Mock the external dependencies
 jest.mock("cheerio")
