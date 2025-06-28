@@ -115,3 +115,15 @@ export function parseCssColor(color?: string): [number, number, number] | null {
 
   return null
 }
+
+export function lightenColor(color: string, percent: number): string {
+  const rgb = parseCssColor(color)
+  if (!rgb) return color
+  const [r, g, b] = rgb
+  const newR = Math.round(r + (255 - r) * percent)
+  const newG = Math.round(g + (255 - g) * percent)
+  const newB = Math.round(b + (255 - b) * percent)
+  return `#${newR.toString(16).padStart(2, "0")}${newG
+    .toString(16)
+    .padStart(2, "0")}${newB.toString(16).padStart(2, "0")}`
+}
