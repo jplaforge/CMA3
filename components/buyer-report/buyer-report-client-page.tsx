@@ -104,7 +104,7 @@ export default function BuyerReportClientPage({ googleMapsApiKey }: BuyerReportC
       className="flex flex-col min-h-screen font-sans text-[#1E404B] p-4 sm:p-6 md:p-8"
       style={{
         background: "linear-gradient(to bottom, #F1F8FD, #EFF7FC)",
-        "--primary": "#1E404B",
+        "--primary": reportData.primaryColor || "#1E404B",
       } as React.CSSProperties}
     >
       <header

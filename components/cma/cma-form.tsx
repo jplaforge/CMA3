@@ -533,7 +533,13 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col h-screen p-4 sm:p-6 md:p-8">
+      <div
+        className="flex flex-col min-h-screen font-sans text-[#1E404B] p-4 sm:p-6 md:p-8"
+        style={{
+          background: "linear-gradient(to bottom, #F1F8FD, #EFF7FC)",
+          "--primary": cmaReportData.primaryColor || "#1E404B",
+        } as React.CSSProperties}
+      >
         <header className="flex justify-between items-center mb-6 shrink-0">
           <h1 className="text-3xl font-bold flex items-center gap-3">
             <FileSignatureIcon
