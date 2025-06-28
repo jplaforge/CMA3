@@ -14,8 +14,10 @@ interface PlaceAutocompleteInputProps {
   apiKey?: string
 }
 
+const libraries = ["places"] as const
+
 export default function PlaceAutocompleteInput({ value, onChange, onSelect, onBlur, onKeyDown, placeholder, apiKey }: PlaceAutocompleteInputProps) {
-  const { isLoaded } = useJsApiLoader({ googleMapsApiKey: apiKey || "", libraries: ["places"] })
+  const { isLoaded } = useJsApiLoader({ googleMapsApiKey: apiKey || "", libraries })
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
 
   const handleLoad = (autocomplete: google.maps.places.Autocomplete) => {
