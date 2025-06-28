@@ -124,7 +124,6 @@ export async function POST(req: NextRequest) {
             agency_name: extractedProfile.agencyName,
             primary_color: extractedProfile.primaryColor,
             secondary_color: extractedProfile.secondaryColor,
-            realtor_photo_url: realtorPhotoUrl || null,
             updated_at: new Date().toISOString(),
           },
           { onConflict: "realtor_url" },
