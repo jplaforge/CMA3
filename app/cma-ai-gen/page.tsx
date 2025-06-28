@@ -9,9 +9,15 @@ export default function CmaAiGenRoutePage({ searchParams }: PageProps) {
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
   const reportType = searchParams?.type === "seller" ? "seller" : "buyer"
 
-  return reportType === "seller" ? (
-    <CmaForm googleMapsApiKey={googleMapsApiKey} />
-  ) : (
-    <BuyerReportClientPage googleMapsApiKey={googleMapsApiKey} />
+  const ReportComponent =
+    reportType === "seller" ? CmaForm : BuyerReportClientPage
+
+  return (
+    <div
+      className="flex min-h-screen flex-col font-sans text-[#1E404B]"
+      style={{ background: "linear-gradient(to bottom, #F1F8FD, #EFF7FC)" }}
+    >
+      <ReportComponent googleMapsApiKey={googleMapsApiKey} />
+    </div>
   )
 }
