@@ -9,6 +9,13 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select"
+import {
   Trash2,
   PlusCircle,
   Sparkles,
@@ -26,6 +33,7 @@ import { useToast } from "@/components/ui/use-toast"
 import {
   type CmaReportDataState,
   type PropertyInput,
+  type ListingStrategy,
   initialCmaReportData,
   createEmptyPropertyInput,
 } from "@/lib/cma-types"
@@ -148,6 +156,16 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
       comparableProperties: prev.comparableProperties.map((comp) =>
         comp.id === id ? { ...comp, listingUrl: newUrl } : comp,
       ),
+    }))
+  }
+
+  const handleListingStrategyChange = (
+    field: keyof ListingStrategy,
+    value: string,
+  ) => {
+    setCmaReportData((prev) => ({
+      ...prev,
+      listingStrategy: { ...prev.listingStrategy, [field]: value },
     }))
   }
 
@@ -738,6 +756,65 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
                         placeholder="Overall market conditions, recommendations..."
                         rows={3}
                       />
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="listing-strategy" className={`border rounded-lg shadow-sm ${cardClassName}`}>
+                  <AccordionTrigger className="px-4 py-3 text-lg font-medium hover:no-underline data-[state=open]:border-b">
+                    <div className="flex items-center gap-2">
+                      <FileSignatureIcon className="h-5 w-5" style={{ color: "var(--primary)" }} />
+                      Strategy & Marketing
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pt-2 pb-4 space-y-4">
+                    <div>
+                      <Label htmlFor="pricingStrategy">Proper Pricing</Label>
+                      <Select
+                        value={cmaReportData.listingStrategy?.pricingStrategy}
+                        onValueChange={(v) => handleListingStrategyChange("pricingStrategy", v)}
+                      >
+                        <SelectTrigger id="pricingStrategy">
+                          <SelectValue placeholder="Select option" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Aggressive">Aggressive</SelectItem>
+                          <SelectItem value="Balanced">Balanced</SelectItem>
+                          <SelectItem value="Top of Market">Top of Market</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="goToMarketStrategy">Go To Market Strategy</Label>
+                      <Select
+                        value={cmaReportData.listingStrategy?.goToMarketStrategy}
+                        onValueChange={(v) => handleListingStrategyChange("goToMarketStrategy", v)}
+                      >
+                        <SelectTrigger id="goToMarketStrategy">
+                          <SelectValue placeholder="Select option" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Immediate">Immediate</SelectItem>
+                          <SelectItem value="Delayed">Delayed</SelectItem>
+                          <SelectItem value="Preview Only">Preview Only</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="marketingStrategy">Marketing Strategy</Label>
+                      <Select
+                        value={cmaReportData.listingStrategy?.marketingStrategy}
+                        onValueChange={(v) => handleListingStrategyChange("marketingStrategy", v)}
+                      >
+                        <SelectTrigger id="marketingStrategy">
+                          <SelectValue placeholder="Select option" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Digital First">Digital First</SelectItem>
+                          <SelectItem value="Traditional">Traditional</SelectItem>
+                          <SelectItem value="Hybrid">Hybrid</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </AccordionContent>
                 </AccordionItem>

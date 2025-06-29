@@ -89,6 +89,9 @@ export interface ListingStrategy {
     videoTour?: boolean
     other?: string[]
   }
+  pricingStrategy?: "Aggressive" | "Balanced" | "Top of Market"
+  goToMarketStrategy?: "Immediate" | "Delayed" | "Preview Only"
+  marketingStrategy?: "Digital First" | "Traditional" | "Hybrid"
 }
 
 export interface NetProceedsItem {
@@ -184,6 +187,9 @@ export const initialCmaReportData: CmaReportDataState = {
     priceNarrative: "Positioned competitively based on recent sales and current market conditions.",
     keySellingPoints: [],
     marketingPlan: { mls: true, socialMedia: true, openHouse: false, videoTour: false },
+    pricingStrategy: "Balanced",
+    goToMarketStrategy: "Immediate",
+    marketingStrategy: "Digital First",
   },
   netProceedsProjection: { items: [] },
   nextStepsTimeline: [
