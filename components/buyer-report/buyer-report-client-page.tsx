@@ -95,7 +95,6 @@ export default function BuyerReportClientPage({ googleMapsApiKey }: BuyerReportC
 
   const inactiveTabStyle = reportData.secondaryColor ? { color: textColorForSecondary } : {}
 
-  const generateReportButtonStyle = { backgroundColor: "#64CC7D", color: "#1E404B" }
 
   const cardClassName = reportData.secondaryColor ? "bg-card/80 backdrop-blur-sm" : "bg-card"
 
@@ -124,7 +123,7 @@ export default function BuyerReportClientPage({ googleMapsApiKey }: BuyerReportC
               </p>
             </div>
           </div>
-          <Button asChild className="shrink-0" style={{ backgroundColor: "#64CC7D", color: "#1E404B" }}>
+          <Button asChild className="shrink-0">
             <Link href="/home">
               <ArrowLeftIcon className="mr-2 h-4 w-4" /> Back to Home
             </Link>
@@ -279,7 +278,6 @@ export default function BuyerReportClientPage({ googleMapsApiKey }: BuyerReportC
               <Button
                 asChild
                 size="lg"
-                style={generateReportButtonStyle}
                 className="px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-shadow"
               >
                 <Link href="/cma-report">

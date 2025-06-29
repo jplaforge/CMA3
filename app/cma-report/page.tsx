@@ -107,7 +107,7 @@ export default function CmaToolRoutePage() {
             Home
           </Button>
         </Link>
-        <Button variant="outline" onClick={handlePrint} style={primaryColorStyle}>
+        <Button variant="outline" onClick={handlePrint}>
           <PrinterIcon className="mr-2 h-4 w-4" />
           Print Report
         </Button>
@@ -257,7 +257,7 @@ export default function CmaToolRoutePage() {
 
         <Card className={cn("print:hidden", cardClassName)}>
           <CardFooter className="flex justify-center p-6">
-            <Button asChild variant="outline" style={primaryColorStyle}>
+            <Button asChild variant="outline">
               <Link href="/cma-ai-gen">
                 <Edit3Icon className="mr-2 h-4 w-4" /> Edit Buyer Report
               </Link>

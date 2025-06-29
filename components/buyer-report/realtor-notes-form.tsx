@@ -54,7 +54,6 @@ export default function RealtorNotesForm({ data, setData }: RealtorNotesFormProp
     }
   }
 
-  const buttonStyle = data.primaryColor ? { backgroundColor: data.primaryColor } : {}
 
   return (
     <Card>
@@ -69,7 +68,7 @@ export default function RealtorNotesForm({ data, setData }: RealtorNotesFormProp
         <div className="grid w-full gap-2">
           <div className="flex justify-between items-center">
             <Label htmlFor="realtorNotes">Your Notes</Label>
-            <Button onClick={handleGenerateRecommendation} disabled={isLoading} size="sm" style={buttonStyle}>
+            <Button onClick={handleGenerateRecommendation} disabled={isLoading} size="sm">
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
               Generate with AI
             </Button>
