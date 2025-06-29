@@ -4,6 +4,7 @@ import { generateObject } from "ai"
 import { z } from "zod"
 import * as cheerio from "cheerio"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { analyzeColorsFromUrl } from "@/lib/color-analysis"
 
 // Define the expected structure of the extracted data
 const RealtorProfileSchema = z.object({
@@ -108,7 +109,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Could not extract sufficient text content from the URL." }, { status: 400 })
     }
 
-    // 3. Call OpenAI API
+    // 3. Extract dominant colors from the website as a fallback
+    const fallbackColors = await analyzeColorsFromUrl(validatedUrl)
+
+    // 4. Call OpenAI API
     const { object: extractedProfile } = await generateObject({
       model: openai("gpt-4o"),
       schema: RealtorProfileSchema,
@@ -122,18 +126,25 @@ export async function POST(req: NextRequest) {
       If a piece of information is not clearly available, omit it or leave the field empty. Do not guess.`,
     })
 
-    // 4. Save to Supabase (optional – only if env vars exist)
-    let savedData = extractedProfile
+    const finalProfile = {
+      ...extractedProfile,
+      primaryColor: extractedProfile.primaryColor || fallbackColors.primaryColor,
+      secondaryColor:
+        extractedProfile.secondaryColor || fallbackColors.secondaryColor,
+    }
+
+    // 5. Save to Supabase (optional – only if env vars exist)
+    let savedData = finalProfile
     if (supabase) {
       const { data, error: dbError } = await supabase
         .from("realtor_profiles")
         .upsert(
           {
             realtor_url: validatedUrl,
-            realtor_name: extractedProfile.realtorName,
-            agency_name: extractedProfile.agencyName,
-            primary_color: extractedProfile.primaryColor,
-            secondary_color: extractedProfile.secondaryColor,
+            realtor_name: finalProfile.realtorName,
+            agency_name: finalProfile.agencyName,
+            primary_color: finalProfile.primaryColor,
+            secondary_color: finalProfile.secondaryColor,
             realtor_photo_url: realtorPhotoUrl || null,
             updated_at: new Date().toISOString(),
           },
