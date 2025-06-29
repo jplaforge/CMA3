@@ -150,6 +150,11 @@ export interface CmaReportDataState {
   }
   nextStepsTimeline?: NextStepItem[]
   appendices?: AppendixItem[]
+
+  /**
+   * Full AI-generated report text combining all sections.
+   */
+  generatedReport?: string
 }
 
 export const initialCmaReportData: CmaReportDataState = {
@@ -199,4 +204,5 @@ export const initialCmaReportData: CmaReportDataState = {
     { task: "Go-live on MLS and marketing channels", completed: false },
   ],
   appendices: [],
+  generatedReport: "",
 }
