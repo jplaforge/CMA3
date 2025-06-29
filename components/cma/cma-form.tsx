@@ -848,14 +848,15 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-              <div className="pt-4">
+              <div className="flex justify-center mt-auto pt-6 shrink-0">
                 <Button
                   onClick={handleGenerateFullReport}
                   disabled={isReportLoading}
-                  className="w-full"
+                  size="lg"
+                  className="px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-shadow"
                   style={{ backgroundColor: "var(--primary)", color: textColorForPrimary }}
                 >
-                  <FileTextIcon className="h-4 w-4 mr-2" />
+                  <FileTextIcon className="h-5 w-5 mr-2" />
                   {isReportLoading ? "Generating..." : "Generate Report"}
                 </Button>
               </div>
