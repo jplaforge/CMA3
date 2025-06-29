@@ -4,7 +4,6 @@ import { generateObject } from "ai"
 import { z } from "zod"
 import * as cheerio from "cheerio"
 import { createAdminClient } from "@/lib/supabase/admin"
-import { analyzeColorsFromUrl } from "@/lib/color-analysis"
 
 // Define the expected structure of the extracted data
 const RealtorProfileSchema = z.object({
@@ -26,11 +25,6 @@ const RealtorProfileSchema = z.object({
       "The secondary or accent theme color of the website (e.g., 'gold', '#FFD700', 'rgb(255, 215, 0)'). Prioritize hex codes if available.",
     ),
   realtorPhotoUrl: z.string().url().optional().describe("URL of the realtor's profile photo, if detectable."),
-  realtorEmail: z
-    .string()
-    .email()
-    .optional()
-    .describe("The realtor's email address if it appears anywhere on the page."),
 })
 
 export async function POST(req: NextRequest) {
@@ -114,10 +108,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Could not extract sufficient text content from the URL." }, { status: 400 })
     }
 
-    // 3. Extract dominant colors from the website as a fallback
-    const fallbackColors = await analyzeColorsFromUrl(validatedUrl)
-
-    // 4. Call OpenAI API
+    // 3. Call OpenAI API
     const { object: extractedProfile } = await generateObject({
       model: openai("gpt-4o"),
       schema: RealtorProfileSchema,
@@ -126,32 +117,24 @@ export async function POST(req: NextRequest) {
       ---
       ${textContent}
       ---
-      Based *only* on the provided text, extract the realtor's name, agency name, the website's primary and secondary theme colors, and the realtor's email address if it appears anywhere on the page.
+      Based *only* on the provided text, extract the realtor's name, agency name, and the website's primary and secondary theme colors.
       For colors, if you see CSS variables or inline styles, try to get hex codes. Otherwise, descriptive names are fine (e.g., "deep blue", "bright orange").
       If a piece of information is not clearly available, omit it or leave the field empty. Do not guess.`,
     })
 
-    const finalProfile = {
-      ...extractedProfile,
-      primaryColor: extractedProfile.primaryColor || fallbackColors.primaryColor,
-      secondaryColor:
-        extractedProfile.secondaryColor || fallbackColors.secondaryColor,
-    }
-
-    // 5. Save to Supabase (optional – only if env vars exist)
-    let savedData = finalProfile
+    // 4. Save to Supabase (optional – only if env vars exist)
+    let savedData = extractedProfile
     if (supabase) {
       const { data, error: dbError } = await supabase
         .from("realtor_profiles")
         .upsert(
           {
             realtor_url: validatedUrl,
-            realtor_name: finalProfile.realtorName,
-            agency_name: finalProfile.agencyName,
-            primary_color: finalProfile.primaryColor,
-            secondary_color: finalProfile.secondaryColor,
+            realtor_name: extractedProfile.realtorName,
+            agency_name: extractedProfile.agencyName,
+            primary_color: extractedProfile.primaryColor,
+            secondary_color: extractedProfile.secondaryColor,
             realtor_photo_url: realtorPhotoUrl || null,
-            user_email: extractedProfile.realtorEmail || null,
             updated_at: new Date().toISOString(),
           },
           { onConflict: "realtor_url" },
@@ -167,14 +150,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json(
-      {
-        ...savedData,
-        realtorEmail:
-          (savedData as any).realtorEmail ?? (savedData as any).user_email ?? null,
-      },
-      { status: 200 },
-    )
+    return NextResponse.json(savedData, { status: 200 })
   } catch (error: any) {
     console.error("API Error:", error)
     if (error.name === "AIError") {

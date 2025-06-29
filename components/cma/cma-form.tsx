@@ -9,13 +9,6 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select"
-import {
   Trash2,
   PlusCircle,
   Sparkles,
@@ -26,7 +19,6 @@ import {
   Settings2Icon,
   EyeIcon,
   FileSignatureIcon,
-  FileTextIcon,
   UsersIcon,
   BarChartIcon,
 } from "lucide-react"
@@ -34,7 +26,6 @@ import { useToast } from "@/components/ui/use-toast"
 import {
   type CmaReportDataState,
   type PropertyInput,
-  type ListingStrategy,
   initialCmaReportData,
   createEmptyPropertyInput,
 } from "@/lib/cma-types"
@@ -56,7 +47,6 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
   const [fetchingCompId, setFetchingCompId] = useState<string | null>(null)
   const { toast } = useToast()
   const [isAiAnalysisLoading, setIsAiAnalysisLoading] = useState(false)
-  const [isReportLoading, setIsReportLoading] = useState(false)
   const [activeAccordionItems, setActiveAccordionItems] = useState<string[]>(["subject-property", "comparables"])
   const [textColorForPrimary, setTextColorForPrimary] = useState("#ffffff")
 
@@ -158,16 +148,6 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
       comparableProperties: prev.comparableProperties.map((comp) =>
         comp.id === id ? { ...comp, listingUrl: newUrl } : comp,
       ),
-    }))
-  }
-
-  const handleListingStrategyChange = (
-    field: keyof ListingStrategy,
-    value: string,
-  ) => {
-    setCmaReportData((prev) => ({
-      ...prev,
-      listingStrategy: { ...prev.listingStrategy, [field]: value },
     }))
   }
 
@@ -339,33 +319,6 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
       })
     } finally {
       setIsAiAnalysisLoading(false)
-    }
-  }
-
-  const handleGenerateFullReport = async () => {
-    setIsReportLoading(true)
-    try {
-      const response = await fetch("/api/generate-cma-report", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cmaReportData),
-      })
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to generate report")
-      }
-      const result = await response.json()
-      setCmaReportData((prev) => ({ ...prev, generatedReport: result.report }))
-      toast({ title: "Report Generated", description: "AI summary added." })
-    } catch (error) {
-      console.error("Error generating report:", error)
-      toast({
-        title: "Report Error",
-        description: error instanceof Error ? error.message : "An unknown error occurred.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsReportLoading(false)
     }
   }
 
@@ -581,21 +534,19 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
   return (
     <TooltipProvider>
       <div className="flex flex-col h-screen p-4 sm:p-6 md:p-8">
-        <header className="sticky top-0 z-50 w-full border-b border-[#1E404B] bg-[#1E404B] mb-6 shrink-0">
-          <div className="container mx-auto flex h-24 items-center justify-between py-4 px-4 md:px-6 text-white">
-            <h1 className="text-3xl font-bold flex items-center gap-3">
+        <header className="flex justify-between items-center mb-6 shrink-0">
+          <h1 className="text-3xl font-bold flex items-center gap-3">
             <FileSignatureIcon
               className="h-10 w-10"
               style={{ color: "var(--primary)" }}
             />
             Comparative Market Analysis (CMA) Tool
           </h1>
-            <Button asChild className="shrink-0 bg-[#64CC7D] hover:bg-[#64CC7D]/90 text-[#1E404B]">
-              <Link href="/home">
-                <HomeIcon className="mr-2 h-4 w-4" /> Home
-              </Link>
-            </Button>
-          </div>
+          <Button asChild variant="outline">
+            <Link href="/home">
+              <HomeIcon className="mr-2 h-4 w-4" /> Home
+            </Link>
+          </Button>
         </header>
 
         <ResizablePanelGroup direction="horizontal" className="flex-grow rounded-lg border overflow-hidden">
@@ -788,78 +739,7 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
                     </div>
                   </AccordionContent>
                 </AccordionItem>
-
-                <AccordionItem value="listing-strategy" className={`border rounded-lg shadow-sm ${cardClassName}`}>
-                  <AccordionTrigger className="px-4 py-3 text-lg font-medium hover:no-underline data-[state=open]:border-b">
-                    <div className="flex items-center gap-2">
-                      <FileSignatureIcon className="h-5 w-5" style={{ color: "var(--primary)" }} />
-                      Strategy & Marketing
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-4 pt-2 pb-4 space-y-4">
-                    <div>
-                      <Label htmlFor="pricingStrategy">Proper Pricing</Label>
-                      <Select
-                        value={cmaReportData.listingStrategy?.pricingStrategy}
-                        onValueChange={(v) => handleListingStrategyChange("pricingStrategy", v)}
-                      >
-                        <SelectTrigger id="pricingStrategy">
-                          <SelectValue placeholder="Select option" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Aggressive">Aggressive</SelectItem>
-                          <SelectItem value="Balanced">Balanced</SelectItem>
-                          <SelectItem value="Top of Market">Top of Market</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="goToMarketStrategy">Go To Market Strategy</Label>
-                      <Select
-                        value={cmaReportData.listingStrategy?.goToMarketStrategy}
-                        onValueChange={(v) => handleListingStrategyChange("goToMarketStrategy", v)}
-                      >
-                        <SelectTrigger id="goToMarketStrategy">
-                          <SelectValue placeholder="Select option" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Immediate">Immediate</SelectItem>
-                          <SelectItem value="Delayed">Delayed</SelectItem>
-                          <SelectItem value="Preview Only">Preview Only</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="marketingStrategy">Marketing Strategy</Label>
-                      <Select
-                        value={cmaReportData.listingStrategy?.marketingStrategy}
-                        onValueChange={(v) => handleListingStrategyChange("marketingStrategy", v)}
-                      >
-                        <SelectTrigger id="marketingStrategy">
-                          <SelectValue placeholder="Select option" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Digital First">Digital First</SelectItem>
-                          <SelectItem value="Traditional">Traditional</SelectItem>
-                          <SelectItem value="Hybrid">Hybrid</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
               </Accordion>
-              <div className="flex justify-center mt-auto pt-6 shrink-0">
-                <Button
-                  onClick={handleGenerateFullReport}
-                  disabled={isReportLoading}
-                  size="lg"
-                  className="px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-shadow"
-                  style={{ backgroundColor: "var(--primary)", color: textColorForPrimary }}
-                >
-                  <FileTextIcon className="h-5 w-5 mr-2" />
-                  {isReportLoading ? "Generating..." : "Generate Report"}
-                </Button>
-              </div>
             </div>
           </ResizablePanel>
           <ResizableHandle withHandle />

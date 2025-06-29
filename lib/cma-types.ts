@@ -89,9 +89,6 @@ export interface ListingStrategy {
     videoTour?: boolean
     other?: string[]
   }
-  pricingStrategy?: "Aggressive" | "Balanced" | "Top of Market"
-  goToMarketStrategy?: "Immediate" | "Delayed" | "Preview Only"
-  marketingStrategy?: "Digital First" | "Traditional" | "Hybrid"
 }
 
 export interface NetProceedsItem {
@@ -150,11 +147,6 @@ export interface CmaReportDataState {
   }
   nextStepsTimeline?: NextStepItem[]
   appendices?: AppendixItem[]
-
-  /**
-   * Full AI-generated report text combining all sections.
-   */
-  generatedReport?: string
 }
 
 export const initialCmaReportData: CmaReportDataState = {
@@ -192,9 +184,6 @@ export const initialCmaReportData: CmaReportDataState = {
     priceNarrative: "Positioned competitively based on recent sales and current market conditions.",
     keySellingPoints: [],
     marketingPlan: { mls: true, socialMedia: true, openHouse: false, videoTour: false },
-    pricingStrategy: "Balanced",
-    goToMarketStrategy: "Immediate",
-    marketingStrategy: "Digital First",
   },
   netProceedsProjection: { items: [] },
   nextStepsTimeline: [
@@ -204,5 +193,4 @@ export const initialCmaReportData: CmaReportDataState = {
     { task: "Go-live on MLS and marketing channels", completed: false },
   ],
   appendices: [],
-  generatedReport: "",
 }

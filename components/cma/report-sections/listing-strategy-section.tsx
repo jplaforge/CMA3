@@ -14,21 +14,6 @@ export default function ListingStrategySection({ strategy }: ListingStrategySect
         <CardDescription>How to position and market your property for optimal results.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {strategy?.pricingStrategy && (
-          <p className="text-sm">
-            <strong>Pricing Strategy:</strong> {strategy.pricingStrategy}
-          </p>
-        )}
-        {strategy?.goToMarketStrategy && (
-          <p className="text-sm">
-            <strong>Go to Market:</strong> {strategy.goToMarketStrategy}
-          </p>
-        )}
-        {strategy?.marketingStrategy && (
-          <p className="text-sm">
-            <strong>Marketing Strategy:</strong> {strategy.marketingStrategy}
-          </p>
-        )}
         <div>
           <h4 className="font-semibold text-md mb-1 flex items-center">
             <LightbulbIcon className="h-4 w-4 mr-2 text-primary" />

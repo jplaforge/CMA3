@@ -223,17 +223,20 @@ export default function HomePage() {
                           </p>
                         )}
                       </div>
-                      <div className="mt-4 flex space-x-2 justify-center">
+                      <div className="mt-4 flex space-x-2">
                         <Link href="/cma-ai-gen?type=buyer">
                           <Button className="bg-[#64CC7D] hover:bg-[#64CC7D]/90 text-white">
                             <FileText className="mr-2 h-4 w-4" />
-                            CMA For Buyer
+                            Buyer
                           </Button>
                         </Link>
                         <Link href="/cma-ai-gen?type=seller">
-                          <Button className="bg-[#64CC7D] hover:bg-[#64CC7D]/90 text-white">
+                          <Button
+                            variant="outline"
+                            className="border-[#1E404B] text-[#1E404B] hover:bg-[#1E404B]/10 bg-transparent"
+                          >
                             <BarChart3 className="mr-2 h-4 w-4" />
-                            CMA For Seller
+                            Seller
                           </Button>
                         </Link>
                       </div>

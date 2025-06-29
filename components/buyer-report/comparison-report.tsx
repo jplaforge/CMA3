@@ -308,7 +308,7 @@ export default function ComparisonReport({ data, googleMapsApiKey, cardClassName
               <BuildingIcon className="w-16 h-16 mx-auto mb-4 text-slate-400 dark:text-slate-500" />
               <p className="text-lg font-medium mb-1">No Listings Added Yet</p>
               <p className="text-sm">
-                Please use "Step 2: Comparable Listings" in the left panel to include properties for comparison.
+                Please use "Step 2: Add & Manage Listings" in the left panel to include properties for comparison.
               </p>
             </CardContent>
           </Card>

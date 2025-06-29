@@ -56,14 +56,6 @@ If you're using a separate Postgres database (like Neon), you'll need:
 - `POSTGRES_HOST`: Database host
 - `POSTGRES_DATABASE`: Database name
 
-### 5. Screenshot & Color Extraction
-
-**What it's for**: Taking a headless screenshot of realtor websites and extracting their dominant colors.
-
-**Dependencies**: `puppeteer` and `colorthief` are installed with project dependencies. No API keys are required.
-
-**Optional**: In certain hosting environments you may need to set `PUPPETEER_EXECUTABLE_PATH` to your Chromium binary location.
-
 ## Setup Instructions
 
 1. Copy `.env.example` to `.env.local`:

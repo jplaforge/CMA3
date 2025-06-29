@@ -29,7 +29,7 @@ import {
   Settings2Icon,
   EyeIcon,
 } from "lucide-react"
-import { getContrastingTextColor } from "@/lib/utils"
+import { getContrastingTextColor, lightenColor } from "@/lib/utils"
 
 const MapView = dynamic(() => import("@/components/buyer-report/map-view"), {
   ssr: false,
@@ -107,8 +107,14 @@ export default function BuyerReportClientPage({ googleMapsApiKey }: BuyerReportC
         "--primary": "#1E404B",
       } as React.CSSProperties}
     >
-      <header className="sticky top-0 z-50 w-full border-b border-[#1E404B] bg-[#1E404B] mb-6 shrink-0">
-        <div className="container mx-auto flex h-24 items-center justify-between py-4 px-4 md:px-6 text-white">
+      <header
+        className="sticky top-0 z-50 w-full border-b mb-6 shrink-0"
+        style={{
+          backgroundColor: lightenColor(reportData.primaryColor || "#1E404B", 0.2),
+          borderColor: reportData.primaryColor || "#1E404B",
+        }}
+      >
+        <div className="container mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-white">
           <div className="flex items-center gap-3">
             <HomeIcon className="h-10 w-10" />
             <div>
@@ -206,7 +212,7 @@ export default function BuyerReportClientPage({ googleMapsApiKey }: BuyerReportC
                 <AccordionTrigger className="text-lg font-semibold p-3 hover:no-underline data-[state=open]:border-b">
                   <div className="flex items-center gap-2">
                     <ListChecksIcon className="h-5 w-5" style={{ color: "var(--primary)" }} />
-                    Step 2: Comparable Listings
+                    Step 2: Manage Listings
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="p-3 pt-1">

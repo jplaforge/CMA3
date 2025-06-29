@@ -53,7 +53,6 @@ export default function ReportPreview({ data, apiKey }: ReportPreviewProps) {
     generalNotes,
     priceAdjustmentNotes,
     suggestedPriceRange,
-    generatedReport,
   } = data
 
   // Add this line to determine if the subject property is valid for comparison
@@ -308,16 +307,6 @@ export default function ReportPreview({ data, apiKey }: ReportPreviewProps) {
             <p className="text-muted-foreground">No pricing summary or notes provided yet.</p>
           )}
         </section>
-
-        {generatedReport && (
-          <>
-            <Separator />
-            <section>
-              <h2 className="text-xl font-semibold mb-3">AI Generated Summary</h2>
-              <p className="whitespace-pre-wrap text-sm">{generatedReport}</p>
-            </section>
-          </>
-        )}
       </CardContent>
     </Card>
   )

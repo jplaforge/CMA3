@@ -14,7 +14,7 @@ export default function RealtorHeader({ reportData }: RealtorHeaderProps) {
 
   return (
     <div className="flex items-center gap-4 rounded-md mb-4 p-4" style={{ backgroundColor: bgColor, color: textColor }}>
-      <Avatar className="h-[5.2rem] w-[5.2rem]">
+      <Avatar className="h-16 w-16">
         <AvatarImage src={realtorPhoto || "/placeholder-user.jpg"} alt={preparedBy || "Realtor"} />
         <AvatarFallback>{preparedBy ? preparedBy.charAt(0) : "R"}</AvatarFallback>
       </Avatar>

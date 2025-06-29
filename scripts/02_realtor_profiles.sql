@@ -1,7 +1,7 @@
 -- Create a table to store realtor profile information
 CREATE TABLE IF NOT EXISTS realtor_profiles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_email TEXT, -- Optional: store the realtor email address if available
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE, -- Optional: if you have user authentication
     realtor_url TEXT NOT NULL UNIQUE,
     realtor_name TEXT,
     agency_name TEXT,
@@ -12,28 +12,28 @@ CREATE TABLE IF NOT EXISTS realtor_profiles (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Optional: Add a unique index if not using user_email or if realtor_url should be globally unique
+-- Optional: Add a unique index if not using user_id or if realtor_url should be globally unique
 -- CREATE UNIQUE INDEX IF NOT EXISTS realtor_profiles_realtor_url_idx ON realtor_profiles (realtor_url);
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE realtor_profiles ENABLE ROW LEVEL SECURITY;
 
 -- Policies for RLS (adjust based on your auth setup)
--- Example: Allow users to manage their own profiles if user_email is stored
+-- Example: Allow users to manage their own profiles if user_id is used
 CREATE POLICY "Allow individual user access to their own profiles"
 ON realtor_profiles
 FOR ALL
-USING (auth.uid()::text = user_email)
-WITH CHECK (auth.uid()::text = user_email);
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
 
--- Example: Allow public read if no user_email or for general access (less secure for personal data)
+-- Example: Allow public read if no user_id or for general access (less secure for personal data)
 -- CREATE POLICY "Allow public read access"
 -- ON realtor_profiles
 -- FOR SELECT
 -- USING (true);
 
--- If not using user_email and want it to be simpler for a single-user context or demo:
--- Remove user_email column and related policies, or make user_email nullable.
+-- If not using user_id and want it to be simpler for a single-user context or demo:
+-- Remove user_id column and related policies, or make user_id nullable.
 -- For this example, I'll assume a multi-user context is possible, but you can simplify.
 
 -- Trigger to update "updated_at" timestamp
@@ -57,4 +57,3 @@ COMMENT ON COLUMN realtor_profiles.agency_name IS 'Extracted name of the real es
 COMMENT ON COLUMN realtor_profiles.primary_color IS 'Extracted primary theme color (e.g., hex or descriptive).';
 COMMENT ON COLUMN realtor_profiles.secondary_color IS 'Extracted secondary theme color (e.g., hex or descriptive).';
 COMMENT ON COLUMN realtor_profiles.realtor_photo_url IS 'URL to the realtor\'s profile photo, if found.';
-COMMENT ON COLUMN realtor_profiles.user_email IS 'Email address of the realtor if it was discovered during website analysis.';
