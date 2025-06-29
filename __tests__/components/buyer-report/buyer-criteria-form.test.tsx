@@ -2,8 +2,8 @@
 
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { BuyerCriteriaForm } from "@/components/buyer-report/buyer-criteria-form"
-import jest from "jest" // Import jest to declare the variable
+import BuyerCriteriaForm from "@/components/buyer-report/buyer-criteria-form"
+import { jest } from "@jest/globals"
 
 // Mock the form submission
 const mockOnSubmit = jest.fn()

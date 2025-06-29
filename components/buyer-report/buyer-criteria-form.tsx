@@ -43,7 +43,11 @@ export default function BuyerCriteriaForm({ data, setData, googleMapsApiKey }: B
     return hasEmpty ? current : [...current, createEmptyPOI()]
   }
 
-  const geocodePoi = async (address: string, id: string) => {
+  const geocodePoi = async (
+    address: string,
+    id: string,
+    place?: google.maps.places.PlaceResult,
+  ) => {
     if (!address) return
     try {
       const res = await fetch("/api/geocode-address", {
@@ -53,9 +57,23 @@ export default function BuyerCriteriaForm({ data, setData, googleMapsApiKey }: B
       })
       if (res.ok) {
         const { lat, lng } = await res.json()
+        const placeName = place?.name && place.formatted_address !== place.name
+          ? place.name
+          : undefined
         setData((prev) => {
           const updated = prev.buyerCriteria.pointsOfInterest.map((p) =>
-            p.id === id ? { ...p, lat, lng, address, name: p.name || address } : p,
+            p.id === id
+              ? {
+                  ...p,
+                  lat,
+                  lng,
+                  address,
+                  name:
+                    placeName !== undefined
+                      ? placeName
+                      : p.name,
+                }
+              : p,
           )
           return {
             ...prev,
@@ -206,13 +224,19 @@ export default function BuyerCriteriaForm({ data, setData, googleMapsApiKey }: B
                 onChange={(val) =>
                   handlePoiChange({ target: { name: "address", value: val } } as any, poi.id)
                 }
-                onSelect={(addr) => geocodePoi(addr, poi.id)}
+                onSelect={(addr, place) => geocodePoi(addr, poi.id, place)}
                 onBlur={(val) => geocodePoi(val, poi.id)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") geocodePoi(poi.address, poi.id)
                 }}
                 placeholder="Address or place name"
                 apiKey={googleMapsApiKey}
+              />
+              <Input
+                name="name"
+                value={poi.name}
+                onChange={(e) => handlePoiChange(e as any, poi.id)}
+                placeholder="Name (optional)"
               />
             </div>
           ))}
