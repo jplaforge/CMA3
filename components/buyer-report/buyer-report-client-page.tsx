@@ -206,7 +206,7 @@ export default function BuyerReportClientPage({ googleMapsApiKey }: BuyerReportC
                 <AccordionTrigger className="text-lg font-semibold p-3 hover:no-underline data-[state=open]:border-b">
                   <div className="flex items-center gap-2">
                     <ListChecksIcon className="h-5 w-5" style={{ color: "var(--primary)" }} />
-                    Step 2: Manage Listings
+                    Step 2: Comparable Listings
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="p-3 pt-1">
