@@ -688,7 +688,6 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
                       onClick={handleGenerateAiAnalysis}
                       disabled={isAiAnalysisLoading || !hasSubjectDetails || comparableDetailsCount === 0}
                       className="w-full mb-2"
-                      style={{ backgroundColor: "var(--primary)", color: textColorForPrimary }}
                     >
                       <Sparkles className="h-4 w-4 mr-2" />
                       {isAiAnalysisLoading ? "Generating..." : "Generate AI Analysis & Pricing"}
@@ -753,15 +752,6 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
                 <Button
                   variant="outline"
                   onClick={() => typeof window !== "undefined" && window.print()}
-                  style={{ borderColor: "var(--primary)", color: "var(--primary)" }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = "var(--primary)"
-                    e.currentTarget.style.color = textColorForPrimary
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = "transparent"
-                    e.currentTarget.style.color = "var(--primary)"
-                  }}
                 >
                   Print Report
                 </Button>

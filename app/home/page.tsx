@@ -161,13 +161,18 @@ export default function HomePage() {
                         placeholder="https://your-realtor-website.com"
                         value={realtorUrl}
                         onChange={(e) => setRealtorUrl(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault()
+                            handleAnalyzeAndSaveUrl()
+                          }
+                        }}
                         className="flex-1"
                         disabled={isAnalyzing}
                       />
                       <Button
                         onClick={handleAnalyzeAndSaveUrl}
                         disabled={isAnalyzing || !realtorUrl.trim()}
-                        className="bg-[#1E404B] hover:bg-[#1E404B]/90 text-white"
                       >
                         {isAnalyzing ? (
                           <>
@@ -225,16 +230,13 @@ export default function HomePage() {
                       </div>
                       <div className="mt-4 flex space-x-2">
                         <Link href="/cma-ai-gen?type=buyer">
-                          <Button className="bg-[#64CC7D] hover:bg-[#64CC7D]/90 text-white">
+                          <Button>
                             <FileText className="mr-2 h-4 w-4" />
                             Buyer
                           </Button>
                         </Link>
                         <Link href="/cma-ai-gen?type=seller">
-                          <Button
-                            variant="outline"
-                            className="border-[#1E404B] text-[#1E404B] hover:bg-[#1E404B]/10 bg-transparent"
-                          >
+                          <Button variant="outline">
                             <BarChart3 className="mr-2 h-4 w-4" />
                             Seller
                           </Button>
@@ -320,7 +322,7 @@ export default function HomePage() {
               </div>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/cma-ai-gen">
-                  <Button className="bg-[#64CC7D] hover:bg-[#64CC7D]/90 text-white">
+                  <Button>
                     <FileText className="mr-2 h-4 w-4" />
                     Create Your First Report
                     <ArrowRight className="ml-2 h-4 w-4" />

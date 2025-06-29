@@ -284,8 +284,7 @@ export default function ComparisonReport({ data, googleMapsApiKey, cardClassName
                           asChild
                           variant="outline"
                           size="sm"
-                          className="w-full mt-4 border-primary/30 text-primary hover:bg-primary/5 hover:text-primary"
-                          style={{ borderColor: primaryColor ? `${primaryColor}66` : undefined, color: primaryColor }}
+                          className="w-full mt-4"
                         >
                           <a
                             href={clickableStreetViewUrl}
