@@ -17,13 +17,13 @@ describe("/api/analyze-realtor-url", () => {
     const data = await response.json()
 
     expect(response.status).toBe(400)
-    expect(data.error).toBe("URL is required")
+    expect(data.error).toBe("Realtor URL is required")
   })
 
   it("returns error for invalid URL", async () => {
     const request = new NextRequest("http://localhost:3000/api/analyze-realtor-url", {
       method: "POST",
-      body: JSON.stringify({ url: "invalid-url" }),
+      body: JSON.stringify({ realtorUrl: "invalid-url" }),
     })
 
     const response = await POST(request)
