@@ -26,6 +26,7 @@ import {
   Settings2Icon,
   EyeIcon,
   FileSignatureIcon,
+  FileTextIcon,
   UsersIcon,
   BarChartIcon,
 } from "lucide-react"
@@ -55,6 +56,7 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
   const [fetchingCompId, setFetchingCompId] = useState<string | null>(null)
   const { toast } = useToast()
   const [isAiAnalysisLoading, setIsAiAnalysisLoading] = useState(false)
+  const [isReportLoading, setIsReportLoading] = useState(false)
   const [activeAccordionItems, setActiveAccordionItems] = useState<string[]>(["subject-property", "comparables"])
   const [textColorForPrimary, setTextColorForPrimary] = useState("#ffffff")
 
@@ -337,6 +339,33 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
       })
     } finally {
       setIsAiAnalysisLoading(false)
+    }
+  }
+
+  const handleGenerateFullReport = async () => {
+    setIsReportLoading(true)
+    try {
+      const response = await fetch("/api/generate-cma-report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cmaReportData),
+      })
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to generate report")
+      }
+      const result = await response.json()
+      setCmaReportData((prev) => ({ ...prev, generatedReport: result.report }))
+      toast({ title: "Report Generated", description: "AI summary added." })
+    } catch (error) {
+      console.error("Error generating report:", error)
+      toast({
+        title: "Report Error",
+        description: error instanceof Error ? error.message : "An unknown error occurred.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsReportLoading(false)
     }
   }
 
@@ -819,6 +848,17 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
+              <div className="pt-4">
+                <Button
+                  onClick={handleGenerateFullReport}
+                  disabled={isReportLoading}
+                  className="w-full"
+                  style={{ backgroundColor: "var(--primary)", color: textColorForPrimary }}
+                >
+                  <FileTextIcon className="h-4 w-4 mr-2" />
+                  {isReportLoading ? "Generating..." : "Generate Report"}
+                </Button>
+              </div>
             </div>
           </ResizablePanel>
           <ResizableHandle withHandle />
