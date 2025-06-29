@@ -1,6 +1,6 @@
 import puppeteer from "puppeteer-core"
 import chromium from "@sparticuz/chromium"
-import { getPalette } from "colorthief"
+import ColorThief from "colorthief"
 
 function rgbToHex(rgb: number[]): string {
   return "#" + rgb.map((v) => v.toString(16).padStart(2, "0")).join("")
@@ -22,7 +22,8 @@ export async function analyzeColorsFromUrl(url: string): Promise<{
     const page = await browser.newPage()
     await page.goto(url, { waitUntil: "networkidle2" })
     const buffer = await page.screenshot({ type: "png" })
-    const palette = await getPalette(buffer as Buffer, 5)
+    const colorThief = new ColorThief()
+    const palette = await colorThief.getPalette(buffer as Buffer, 5)
     const [primary, secondary] = palette
     return {
       primaryColor: primary ? rgbToHex(primary) : undefined,
