@@ -1,8 +1,9 @@
-import puppeteer from 'puppeteer'
-import { getPalette } from 'colorthief'
+import puppeteer from "puppeteer-core"
+import chromium from "@sparticuz/chromium"
+import { getPalette } from "colorthief"
 
 function rgbToHex(rgb: number[]): string {
-  return '#' + rgb.map((v) => v.toString(16).padStart(2, '0')).join('')
+  return "#" + rgb.map((v) => v.toString(16).padStart(2, "0")).join("")
 }
 
 export async function analyzeColorsFromUrl(url: string): Promise<{
@@ -11,13 +12,16 @@ export async function analyzeColorsFromUrl(url: string): Promise<{
 }> {
   let browser: puppeteer.Browser | undefined
   try {
+    // Use sparticuz/chromium which is optimized for serverless environments
     browser = await puppeteer.launch({
-      headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: chromium.args,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
+      ignoreHTTPSErrors: true,
     })
     const page = await browser.newPage()
-    await page.goto(url, { waitUntil: 'networkidle2' })
-    const buffer = await page.screenshot({ type: 'png' })
+    await page.goto(url, { waitUntil: "networkidle2" })
+    const buffer = await page.screenshot({ type: "png" })
     const palette = await getPalette(buffer as Buffer, 5)
     const [primary, secondary] = palette
     return {
@@ -25,7 +29,7 @@ export async function analyzeColorsFromUrl(url: string): Promise<{
       secondaryColor: secondary ? rgbToHex(secondary) : undefined,
     }
   } catch (error) {
-    console.error('[color-analysis] Failed to extract colors:', error)
+    console.error("[color-analysis] Failed to extract colors:", error)
     return {}
   } finally {
     if (browser) await browser.close()
