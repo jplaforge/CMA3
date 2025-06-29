@@ -534,19 +534,21 @@ export default function CmaForm({ initialDataProp, googleMapsApiKey }: CmaFormPr
   return (
     <TooltipProvider>
       <div className="flex flex-col h-screen p-4 sm:p-6 md:p-8">
-        <header className="flex justify-between items-center mb-6 shrink-0">
-          <h1 className="text-3xl font-bold flex items-center gap-3">
+        <header className="sticky top-0 z-50 w-full border-b border-[#1E404B] bg-[#1E404B] mb-6 shrink-0">
+          <div className="container mx-auto flex h-24 items-center justify-between py-4 px-4 md:px-6 text-white">
+            <h1 className="text-3xl font-bold flex items-center gap-3">
             <FileSignatureIcon
               className="h-10 w-10"
               style={{ color: "var(--primary)" }}
             />
             Comparative Market Analysis (CMA) Tool
           </h1>
-          <Button asChild variant="outline">
-            <Link href="/home">
-              <HomeIcon className="mr-2 h-4 w-4" /> Home
-            </Link>
-          </Button>
+            <Button asChild className="shrink-0 bg-[#64CC7D] hover:bg-[#64CC7D]/90 text-[#1E404B]">
+              <Link href="/home">
+                <HomeIcon className="mr-2 h-4 w-4" /> Home
+              </Link>
+            </Button>
+          </div>
         </header>
 
         <ResizablePanelGroup direction="horizontal" className="flex-grow rounded-lg border overflow-hidden">
