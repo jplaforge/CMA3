@@ -5,136 +5,117 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Copy, Ghost } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-import { Toaster } from "@/components/ui/toaster"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Copy } from "lucide-react"
 
 export default function PuppeteerTestPage() {
-  const [url, setUrl] = useState("https://www.realtor.com/")
+  const [url, setUrl] = useState("https://example.com")
   const [isLoading, setIsLoading] = useState(false)
-  const [apiResponse, setApiResponse] = useState<any>(null)
-  const [origin, setOrigin] = useState("")
-  const { toast } = useToast()
+  const [result, setResult] = useState<any>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [apiUrl, setApiUrl] = useState("")
 
   useEffect(() => {
+    // Ensure window is defined before using it
     if (typeof window !== "undefined") {
-      setOrigin(window.location.origin)
+      setApiUrl(`${window.location.origin}/api/analyze-realtor-url?url=`)
     }
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setApiResponse(null)
+    setError(null)
+    setResult(null)
+
     try {
       const response = await fetch("/api/analyze-realtor-url", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
       })
 
-      const data = await response.json()
-
       if (!response.ok) {
-        throw new Error(data.error || "Something went wrong")
+        const errorText = await response.text()
+        throw new Error(`Network response was not ok: ${response.status} ${response.statusText} - ${errorText}`)
       }
 
-      setApiResponse(data)
-      toast({
-        title: "Analysis Complete",
-        description: `Successfully analyzed ${url}`,
-      })
-    } catch (error: any) {
-      console.error(error)
-      setApiResponse({ error: error.message })
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      })
+      const data = await response.json()
+      setResult(data)
+    } catch (err: any) {
+      setError(err.message)
     } finally {
       setIsLoading(false)
     }
   }
 
-  const apiUrl = `${origin}/api/analyze-realtor-url`
-
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(apiUrl)
-    toast({
-      title: "Copied!",
-      description: "API endpoint copied to clipboard.",
-    })
+    navigator.clipboard.writeText(apiUrl + url)
   }
 
   return (
-    <>
-      <Toaster />
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
-        <div className="w-full max-w-2xl">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold flex items-center justify-center gap-2">
-              <Ghost className="w-8 h-8" />
-              openPuppeteer
-            </h1>
-            <p className="text-muted-foreground mt-2">A simple interface to test the Puppeteer URL analysis API.</p>
-          </div>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
+      <div className="w-full max-w-2xl">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold">openPuppeteer</h1>
+          <p className="text-gray-600 mt-2">Free Puppeteer as a Service | Set up easily on Vercel.</p>
+        </div>
 
-          <Card className="w-full">
+        <Card>
+          <CardHeader>
+            <CardTitle>Get Started</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-500 mb-4">Enter a URL to check its status or use our API.</p>
+            <form onSubmit={handleSubmit} className="flex items-center gap-2">
+              <Input
+                type="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://example.com"
+                required
+              />
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "Checking..." : "Check Status"}
+              </Button>
+            </form>
+
+            <div className="mt-4 p-3 bg-gray-100 rounded-md flex items-center justify-between">
+              <code className="text-sm truncate">
+                <span className="text-green-600 font-semibold">GET</span> {apiUrl}
+                {url}
+              </code>
+              <Button variant="ghost" size="icon" onClick={copyToClipboard}>
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {error && (
+          <Card className="mt-4 bg-red-50 border-red-200">
             <CardHeader>
-              <CardTitle>Get Started</CardTitle>
-              <CardDescription>Enter a URL to analyze its content using our API.</CardDescription>
+              <CardTitle className="text-red-700">Error</CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-2">
-                <Input
-                  type="url"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://www.realtor.com/"
-                  required
-                  className="flex-grow"
-                />
-                <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
-                  {isLoading ? "Analyzing..." : "Analyze URL"}
-                </Button>
-              </form>
-              <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-md flex items-center justify-between text-sm text-muted-foreground">
-                <pre className="overflow-x-auto">
-                  <span className="text-green-600 font-semibold">POST</span> {apiUrl}
-                </pre>
-                <Button variant="ghost" size="icon" onClick={copyToClipboard}>
-                  <Copy className="w-4 h-4" />
-                </Button>
-              </div>
+              <pre className="text-sm text-red-600 whitespace-pre-wrap">{error}</pre>
             </CardContent>
           </Card>
+        )}
 
-          {isLoading && (
-            <Card className="mt-4">
-              <CardContent className="p-6 text-center">
-                <p>Loading analysis...</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {apiResponse && (
-            <Card className="mt-4">
-              <CardHeader>
-                <CardTitle>API Response</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <pre className="p-4 bg-gray-900 text-white rounded-md overflow-x-auto text-xs">
-                  {JSON.stringify(apiResponse, null, 2)}
-                </pre>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+        {result && (
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle>Result</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre className="text-sm bg-gray-100 p-4 rounded-md overflow-x-auto">
+                {JSON.stringify(result, null, 2)}
+              </pre>
+            </CardContent>
+          </Card>
+        )}
       </div>
-    </>
+    </div>
   )
 }
